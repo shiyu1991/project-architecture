@@ -70,11 +70,20 @@ Technology choices must weigh:
 - Companion plugins are presented as **multi-select checkboxes** for the user to pick as needed
 - Each option is labeled "recommended" with a one-sentence explanation to reduce decision cost
 
+### User Choice Principle (highest priority, mandatory)
+
+- **The AI Agent only recommends — it never chooses for the user.** Unless the user explicitly says "auto-select the rest for me," every layer MUST be confirmed by the user via checkbox
+- **Auto-filling is forbidden** for any layer (even if it seems "obvious")
+- **Auto-locking is forbidden** for any layer (even if the framework ecosystem has only one mainstream option)
+- **Skipping layers is forbidden** — even if the chosen framework already covers that capability
+- Recommendations are only labeled "recommended" — they do not replace user selection
+- The user may say "auto-select the rest for me" at any time to authorize the AI to batch-select
+
 ### Capability Awareness Principle (mandatory)
 
 - After the user picks a framework, the AI Agent **MUST check whether it already covers a later layer's capability**
-- If covered: mark that layer as "covered — use built-in", skip by default, and do not recommend a third-party library
-- If the user's needs exceed the built-in capability: only then recommend a standalone solution, labeled "choose when built-in is insufficient"
+- If covered: still ask the user, but present "use built-in" as the recommended option labeled "covered"
+- If the user's needs exceed the built-in capability: recommend a standalone solution, labeled "choose when built-in is insufficient"
 - See section 2.3 "Framework Capability Coverage Matrix" for details
 
 ---
@@ -456,11 +465,11 @@ Version compatibility evolves with the ecosystem; at selection time, consult the
 | **Ant Design Vue** (Vue) | L9 Form validation | Consistent with Ant Design form validation | Skip L9, mark "covered" |
 | **Naive UI** (Vue) | L9 Form validation | `n-form` built-in validation | Skip L9, mark "covered" |
 | **MUI** (React) | L9 Form validation | `FormControl` + `TextField` validation | Skip L9, mark "covered" |
-| **Vue Router** | L8 Router | Official routing solution | Auto-lock, no further question |
-| **React Router** | L8 Router | React ecosystem standard router | Auto-lock, no further question |
-| **Next.js** | L3 Build + L8 Router | Built-in Turbopack build + App Router | Auto-lock L3 and L8 |
-| **SvelteKit** | L3 Build + L8 Router | Built-in Vite build + file-based routing | Auto-lock L3 and L8 |
-| **Nuxt** (Vue) | L3 Build + L8 Router | Built-in Vite build + file-based routing | Auto-lock L3 and L8 |
+| **Vue Router** | L8 Router | Official routing solution | Recommend, but require user confirmation |
+| **React Router** | L8 Router | React ecosystem standard router | Recommend, but require user confirmation |
+| **Next.js** | L3 Build + L8 Router | Built-in Turbopack build + App Router | Recommend built-in, but require user confirmation |
+| **SvelteKit** | L3 Build + L8 Router | Built-in Vite build + file-based routing | Recommend built-in, but require user confirmation |
+| **Nuxt** (Vue) | L3 Build + L8 Router | Built-in Vite build + file-based routing | Recommend built-in, but require user confirmation |
 
 ### Backend Framework Capability Coverage
 
@@ -483,50 +492,50 @@ User selects framework X
 AI Agent queries the capability coverage matrix
     ↓
 Does framework X cover layer L?
-    ├── Yes → Mark L as "covered — use built-in"
-    │        └── Does the user need capabilities beyond the built-in?
-    │            ├── No → Skip L, do not recommend a third-party library
-    │            └── Yes → Recommend a standalone solution, labeled "choose when built-in is insufficient"
-    └── No → Show candidate options for L as normal
+    ├── Yes → In layer L, recommend "use built-in", labeled "covered"
+    │        └── Still require user to confirm: use built-in or pick a standalone solution
+    │            ├── User picks "use built-in" → Use framework's built-in capability
+    │            └── User picks "standalone" → Recommend a standalone solution, labeled "choose when built-in is insufficient"
+    └── No → Show candidate options for L as normal, let user choose
 ```
 
 ---
 
-## 2.4 Layered Linkage Rules (choosing A auto-recommends B)
+## 2.4 Layered Linkage Rules (choosing A recommends B, but user still confirms)
 
-> **Core goal:** earlier choices automatically filter later options and link-recommend companion frameworks and plugins, presented as interactive multi-select checkboxes.
+> **Core goal:** earlier choices filter later options and link-recommend companion frameworks and plugins, presented as interactive checkboxes. **Recommend does not mean auto-select — all layers still require user confirmation.**
 
 ### Frontend Linkage Rules
 
-| Chosen (earlier) | Auto-linked (later) | Linkage method |
-|------------------|---------------------|---------------|
-| Vue | L4 shows only Vue-ecosystem libraries | Filter candidates |
-| Vue | L7 recommends Pinia | Auto-fill default |
-| Vue | L8 locks Vue Router | Auto-lock |
-| Vue | L10 recommends Vitest | Auto-fill default |
-| React | L4 shows only React-ecosystem libraries | Filter candidates |
-| React | L7 recommends Zustand (small/mid) / Redux Toolkit (large) | Auto-fill default |
-| React | L8 recommends React Router | Auto-fill default |
-| Svelte | L4 shows only Svelte-ecosystem libraries | Filter candidates |
-| Svelte | L7 locks Svelte Stores | Auto-lock |
-| Svelte | L8 locks SvelteKit router | Auto-lock |
-| Vite (L3) | L10 recommends Vitest | Auto-fill default |
-| Next.js (L1+L3) | L8 locks App Router | Auto-lock |
-| TailwindCSS (L5) | L11 adds TailwindCSS class-sorting plugin | Recommend plugin |
+| Chosen (earlier) | Linked recommendation (later) | Linkage method |
+|------------------|-------------------------------|---------------|
+| Vue | L4 shows Vue-ecosystem library candidates | Filter candidates |
+| Vue | L7 recommends Pinia | Label "recommended," user confirms |
+| Vue | L8 recommends Vue Router | Label "recommended," user confirms |
+| Vue | L10 recommends Vitest | Label "recommended," user confirms |
+| React | L4 shows React-ecosystem library candidates | Filter candidates |
+| React | L7 recommends Zustand (small/mid) / Redux Toolkit (large) | Label "recommended," user confirms |
+| React | L8 recommends React Router | Label "recommended," user confirms |
+| Svelte | L4 shows Svelte-ecosystem library candidates | Filter candidates |
+| Svelte | L7 recommends Svelte Stores | Label "recommended," user confirms |
+| Svelte | L8 recommends SvelteKit router | Label "recommended," user confirms |
+| Vite (L3) | L10 recommends Vitest | Label "recommended," user confirms |
+| Next.js (L1+L3) | L8 recommends App Router | Label "recommended," user confirms |
+| TailwindCSS (L5) | L11 recommends TailwindCSS class-sorting plugin | Recommend plugin |
 
 ### Backend Linkage Rules
 
-| Chosen (earlier) | Auto-linked (later) | Linkage method |
-|------------------|---------------------|---------------|
-| Node.js | L4 shows only Node-ecosystem ORMs | Filter candidates |
-| Node.js | L9 recommends Pino | Auto-fill default |
+| Chosen (earlier) | Linked recommendation (later) | Linkage method |
+|------------------|-------------------------------|---------------|
+| Node.js | L4 shows Node-ecosystem ORM candidates | Filter candidates |
+| Node.js | L9 recommends Pino | Label "recommended," user confirms |
 | NestJS | L8 recommends `@nestjs/passport` | Recommend plugin |
-| NestJS | L10 recommends Jest | Auto-fill default |
-| Java | L4 shows only Java-ecosystem ORMs | Filter candidates |
-| Spring Boot | L9 locks Logback | Auto-lock |
-| Spring Boot | L8 recommends Spring Security | Auto-fill default |
-| Go | L4 shows only Go-ecosystem ORMs | Filter candidates |
-| Go | L9 recommends Zap | Auto-fill default |
+| NestJS | L10 recommends Jest | Label "recommended," user confirms |
+| Java | L4 shows Java-ecosystem ORM candidates | Filter candidates |
+| Spring Boot | L9 recommends Logback | Label "recommended," user confirms |
+| Spring Boot | L8 recommends Spring Security | Label "recommended," user confirms |
+| Go | L4 shows Go-ecosystem ORM candidates | Filter candidates |
+| Go | L9 recommends Zap | Label "recommended," user confirms |
 | Gin | L8 recommends `golang-jwt/jwt` | Recommend plugin |
 | Prisma | L5 compatible with MySQL / PostgreSQL / MongoDB | Filter candidates |
 | MyBatis Plus | L5 compatible with MySQL / PostgreSQL | Filter candidates |

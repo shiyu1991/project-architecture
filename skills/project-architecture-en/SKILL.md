@@ -130,9 +130,25 @@ In Product mode, this phase outputs a **domain-model sketch + core user flows**,
 
 # 7. Tech Selection Overview
 
-Tech selection uses **interactive checkbox + capability awareness + layered linkage**: the AI Agent MUST use the `ask_followup_question` tool to let users select via checkboxes, not plain text recommendations; during selection, automatically detect the chosen framework's built-in capabilities, skip redundant layers, and link-recommend compatible companion frameworks and plugins.
+Tech selection uses **layer-by-layer interactive checkbox + capability awareness + linkage recommendations**: the AI Agent MUST use the `ask_followup_question` tool to let users select via checkboxes, not plain text recommendations; during selection, detect the chosen framework's built-in capabilities and label "covered" hints in subsequent layers; link-recommend compatible companion frameworks and plugins.
 
-## 7.1 Interactive Selection Flow (mandatory)
+## 7.1 Supreme Principle: The User Always Has the Final Say (mandatory)
+
+**The AI Agent is an intelligent brain — it only recommends, never chooses for the user.** Unless the user explicitly says "auto-select the rest for me," every layer MUST be confirmed by the user via checkbox.
+
+**Forbidden:**
+- Auto-filling any layer's selection (even if it seems "obvious")
+- Auto-locking any layer (even if the framework ecosystem has only one mainstream option)
+- Skipping any layer without asking the user (even if the chosen framework already covers that capability)
+- Pre-selecting/default-checking any option (recommendations are only labeled "recommended," not auto-selected)
+
+**Correct behavior:**
+- Every layer is presented via `ask_followup_question` for the user to choose
+- Recommended items are labeled "recommended" with a one-sentence reason, but the choice belongs to the user
+- Layers covered by the chosen framework still require the user to confirm whether to use built-in or pick a standalone solution
+- The user may say "auto-select the rest for me" at any time to authorize the AI to batch-select
+
+## 7.2 Interactive Selection Flow (mandatory)
 
 **The AI Agent MUST use the `ask_followup_question` tool for tech selection.** Plain-text tables for verbal confirmation are forbidden.
 
@@ -140,7 +156,7 @@ Selection has two phases:
 
 ### Phase 1: Core Framework Selection (batch checkbox)
 
-Present key selections (frontend framework, backend language/framework, database, etc.) in one batch for the user to check off:
+Present key selections (frontend framework, backend language, database, etc.) in one batch for the user to check off:
 
 ```
 ask_followup_question({
@@ -153,76 +169,88 @@ ask_followup_question({
 })
 ```
 
-### Phase 2: Extended Selection Based on Phase 1 (linked checkbox)
+### Phase 2: Layer-by-Layer Extended Selection (linked checkbox)
 
-Based on Phase 1 results, automatically filter and present compatible candidates, and mark layers already covered by the chosen framework (skippable):
+Based on Phase 1 results, present compatible candidates **layer by layer**, with each layer requiring user selection:
 
 ```
 ask_followup_question({
   questions: [
-    { question: "UI component library?", options: ["Element Plus (recommended)", "Naive UI", "Ant Design Vue"], multiSelect: false },
+    { question: "Language?", options: [
+      "TypeScript (recommended: type safety, IDE intelligence)",
+      "JavaScript (no compile overhead, low learning curve)"
+    ], multiSelect: false },
+    { question: "UI component library?", options: [
+      "Element Plus (recommended: mature Vue 3 ecosystem, large Chinese community)",
+      "Naive UI",
+      "Ant Design Vue"
+    ], multiSelect: false },
     { question: "Form validation?", options: [
-      "Use Element Plus built-in validation (recommended, already covered)",
+      "Use Element Plus built-in validation (recommended: already covered, zero extra deps)",
       "VeeValidate + Zod (choose when more complex validation is needed)",
       "Zod (Schema validation only)"
     ], multiSelect: false },
-    { question: "Which companion plugins do you need?", options: [
-      "pinia-plugin-persistedstate (state persistence)",
-      "unplugin-auto-import (auto API imports)",
-      "unplugin-vue-components (auto component imports)"
-    ], multiSelect: true },
     ...
   ]
 })
 ```
 
-## 7.2 Capability Awareness & Redundancy Elimination (mandatory)
+**Key rules:**
+- 3-4 checkbox questions per batch, avoid showing too many at once
+- Each option labeled "recommended" with a one-sentence reason
+- Layers covered by the chosen framework show "use built-in" as the recommended option, but still require user confirmation
+- Companion plugins are presented as multi-select checkboxes for the user to pick as needed
 
-**The AI Agent MUST detect capabilities already provided by the chosen framework and auto-mark subsequent layers as "covered" or adjust recommendations.**
+## 7.3 Capability Awareness & Redundancy Hints (mandatory)
+
+**The AI Agent MUST detect capabilities already provided by the chosen framework and label "covered" hints in subsequent layers.**
 
 Core rules:
 
 1. **Capability detection** — after the user picks a framework, check whether it already covers a later layer's capability
-2. **Auto-skip** — if covered and no higher need, mark that layer as "covered — use built-in" and do not recommend a third-party library
-3. **Upgrade prompt** — only recommend a standalone solution when the user's needs exceed the built-in capability, labeled "choose when built-in is insufficient"
+2. **Coverage hint** — if covered, still ask the user, but present "use built-in" as the recommended option labeled "covered"
+3. **Upgrade prompt** — recommend a standalone solution when the user's needs exceed the built-in capability, labeled "choose when built-in is insufficient"
 4. **Multi-select plugins** — companion plugins are presented as multi-select checkboxes for the user to pick as needed
 
 Common capability coverage relationships (full matrix in `references/tech-stack-guide.md` section 2.3):
 
-| Chosen framework | Covered layers | Default strategy |
-|------------------|---------------|------------------|
-| Element Plus (Vue) | L9 Form validation | Mark "covered" unless cross-component complex validation is needed |
-| Ant Design (React) | L9 Form validation | Mark "covered" unless cross-component complex validation is needed |
-| NestJS | L8 Auth (Passport integration) | Recommend `@nestjs/passport` rather than a standalone solution |
-| Vue Router | L8 Router | Auto-lock, no further question |
-| SvelteKit | L8 Router + L3 Build | Auto-lock, no further question |
-| Next.js | L3 Build + L8 Router | Auto-lock, no further question |
+| Chosen framework | Covered layers | Recommendation strategy |
+|------------------|---------------|--------------------------|
+| Element Plus (Vue) | L9 Form validation | Recommend "use built-in validation," but still require user confirmation |
+| Ant Design (React) | L9 Form validation | Recommend "use built-in validation," but still require user confirmation |
+| NestJS | L8 Auth | Recommend `@nestjs/passport`, but still require user confirmation |
+| Vue Router | L8 Router | Recommend Vue Router, but still require user confirmation |
+| SvelteKit | L8 Router + L3 Build | Recommend SvelteKit built-in, but still require user confirmation |
+| Next.js | L3 Build + L8 Router | Recommend Next.js built-in, but still require user confirmation |
 
-## 7.3 Layered Linkage Rules
+## 7.4 Layered Linkage Rules
 
-**Earlier choices automatically filter later options and trigger companion recommendations.**
+**Earlier choices filter later options and trigger recommendations — but do not auto-select.**
 
-- Vue → L4 shows only Vue-ecosystem libraries; L7 recommends Pinia; L8 locks Vue Router
-- React → L4 shows only React-ecosystem libraries; L7 recommends Zustand/Redux Toolkit; L8 recommends React Router
-- Svelte → L4 shows only Svelte-ecosystem libraries; L7 locks Svelte Stores; L8 locks SvelteKit router
-- Node.js → L4 shows only Node-ecosystem ORMs; L9 recommends Pino
-- Java → L4 shows only Java-ecosystem ORMs; L9 recommends Logback
-- Go → L4 shows only Go-ecosystem ORMs; L9 recommends Zap
+- Vue → L4 shows Vue-ecosystem library candidates; L7 recommends Pinia; L8 recommends Vue Router — all require user confirmation
+- React → L4 shows React-ecosystem library candidates; L7 recommends Zustand/Redux Toolkit; L8 recommends React Router — all require user confirmation
+- Svelte → L4 shows Svelte-ecosystem library candidates; L7 recommends Svelte Stores; L8 recommends SvelteKit router — all require user confirmation
+- Node.js → L4 shows Node-ecosystem ORM candidates; L9 recommends Pino — all require user confirmation
+- Java → L4 shows Java-ecosystem ORM candidates; L9 recommends Logback — all require user confirmation
+- Go → L4 shows Go-ecosystem ORM candidates; L9 recommends Zap — all require user confirmation
 
-## 7.4 Selection Layers
+**Key:** "Recommend" does not mean "auto-select." Every layer must be confirmed by the user via checkbox.
 
-**Frontend layers**: Main framework → Language → Build tool → UI library → CSS approach → HTTP client → State management → Router → Form validation (may be covered by UI library) → Test framework → Code quality tools → i18n (optional)
+## 7.5 Selection Layers
+
+**Frontend layers**: Main framework → Language → Build tool → UI library → CSS approach → HTTP client → State management → Router → Form validation (may be covered by UI library, but still requires confirmation) → Test framework → Code quality tools → i18n (optional)
 
 **Backend layers**: Main language → Backend framework → API style → ORM/data access → Database → Cache → Message queue → Auth → Logging → Test framework → File storage (optional) → Scheduling (optional)
 
 **Cross-cutting concerns**: after frontend and backend selection, guide the user through CI/CD and error monitoring/APM choices.
 
-## 7.5 Interaction Rules per Mode
+## 7.6 Interaction Rules per Mode
 
 - **Guided**: 3-4 checkbox questions per batch, each item labeled "recommended" with a one-sentence explanation; user checks to confirm
-- **Product**: show the full recommended list at once (pre-filled with defaults); user confirms or tweaks
-- **Expert**: batch checkboxes, more candidates per batch (Top 3-5), defaults auto-filled; user adjusts quickly
+- **Product**: show recommended lists in batches, each item labeled "recommended"; user confirms or tweaks batch by batch
+- **Expert**: batch checkboxes, more candidates per batch (Top 3-5), recommended items labeled "recommended"; user selects layer by layer
 - **All modes**: dynamic version resolution (`npm view <pkg> version` / Maven Central / Go Module Proxy / PyPI); never reuse stale version numbers
+- **All modes**: auto-filling, auto-locking, and skipping layers are forbidden. All layers must be confirmed by the user
 
 For detailed candidates, capability coverage matrix, compatibility matrices, linkage rules, and plugin recommendations, see `references/tech-stack-guide.md`.
 
