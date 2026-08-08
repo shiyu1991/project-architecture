@@ -66,7 +66,9 @@ Technology choices must weigh:
 ### Interactive Selection Principle (mandatory)
 
 - The AI Agent **MUST use the `ask_followup_question` tool** to let users select via checkboxes — plain-text tables for verbal confirmation are forbidden
-- Selection has two phases: Phase 1 selects main framework/language; Phase 2 shows compatible candidates based on Phase 1 results
+- Selection has three phases: Phase 1 selects core cross-stack items (main framework/language/database/deployment), Phase 2 shows all frontend layer candidates based on Phase 1 results, Phase 3 shows all backend layer candidates
+- **Frontend and backend selection MUST be separated**: complete all frontend layers first, then select all backend layers; mixing frontend and backend layers in the same batch of questions is forbidden
+- **All question headers MUST include a "Frontend-" or "Backend-" prefix** (except Phase 1 global decisions), to avoid user confusion
 - Companion plugins are presented as **multi-select checkboxes** for the user to pick as needed
 - Each option is labeled "recommended" with a one-sentence explanation to reduce decision cost
 
@@ -90,16 +92,18 @@ Technology choices must weigh:
 
 ## 2. Frontend Tech Selection — Layered Exclusive Flow
 
+> **Mandatory rule:** Frontend selection MUST complete all layers in Phase 2 before entering Phase 3 backend selection. Mixing frontend and backend layers in the same batch is forbidden.
+
 ### Selection Flow
 
 ```
-Layer 1: Main framework  →  Layer 2: Language      →  Layer 3: Build tool
-                                                           ↓
-Layer 4: UI library      →  Layer 5: CSS approach  →  Layer 6: HTTP client
-                                                           ↓
-Layer 7: State mgmt      →  Layer 8: Router        →  Layer 9: Form validation
-                                                           ↓
-Layer 10: Test framework →  Layer 11: Code quality →  Layer 12: i18n (optional)
+Layer 1: Frontend-Main Framework  →  Layer 2: Frontend-Language   →  Layer 3: Frontend-Build Tool
+                                                                       ↓
+Layer 4: Frontend-UI Library      →  Layer 5: Frontend-CSS Approach →  Layer 6: Frontend-HTTP Client
+                                                                       ↓
+Layer 7: Frontend-State Mgmt      →  Layer 8: Frontend-Router       →  Layer 9: Frontend-Form Validation
+                                                                       ↓
+Layer 10: Frontend-Test Framework →  Layer 11: Frontend-Code Quality →  Layer 12: Frontend-i18n (optional)
 ```
 
 **Rule:** start at Layer 1, pick one per layer; earlier choices shape later recommendations.
@@ -297,7 +301,8 @@ options: [
   "Use Element Plus built-in validation (recommended, already covered)",
   "VeeValidate + Zod (choose when complex cross-form validation is needed)",
   "Zod (schema validation only, shared FE/BE)"
-]
+],
+header: "Frontend-Form Validation"
 ```
 
 **Pairing tip:** simple forms → use the UI library's built-in validation; complex forms → React Hook Form + Zod (React) or VeeValidate + Zod (Vue).
@@ -574,7 +579,8 @@ After the user picks a main framework, companion plugins are shown as **multi-se
 ```
 ask_followup_question({
   questions: [{
-    question: "Which companion plugins do you need?",
+    question: "Frontend-Which companion plugins do you need?",
+    header: "Frontend-Companion Plugins",
     multiSelect: true,
     options: [
       "pinia-plugin-persistedstate (state persistence)",
@@ -608,30 +614,32 @@ ask_followup_question({
 ### Custom Option Example
 
 ```
-User: For Layer 4 I want Arco Design
+User: Frontend-UI Library I want Arco Design
 AI: Arco Design is ByteDance's UI library, supporting React and Vue.
     - Compatible with Vue ✅
     - Compatible with React ✅
     - Not compatible with Svelte ❌
     Please confirm.
 User: Confirmed
-AI: Layer 4 locked: Arco Design. Moving to Layer 5: CSS approach...
+AI: Frontend-UI Library locked: Arco Design. Moving to Frontend-CSS Approach...
 ```
 
 ---
 
 ## 3. Backend Tech Selection — Layered Exclusive Flow
 
+> **Mandatory rule:** Backend selection takes place in Phase 3 and MUST only start after all frontend selection is complete. Mixing with frontend layers in the same batch is forbidden.
+
 ### Selection Flow
 
 ```
-Layer 1: Main language   →  Layer 2: Framework  →  Layer 3: API style
-                                                           ↓
-Layer 4: ORM/data access →  Layer 5: Database   →  Layer 6: Cache
-                                                           ↓
-Layer 7: Message queue   →  Layer 8: Auth       →  Layer 9: Logging
-                                                           ↓
-Layer 10: Test framework →  Layer 11: Storage   →  Layer 12: Scheduling (optional)
+Layer 1: Backend-Main Language   →  Layer 2: Backend-Framework  →  Layer 3: Backend-API Style
+                                                                       ↓
+Layer 4: Backend-ORM/Data Access →  Layer 5: Backend-Database    →  Layer 6: Backend-Cache
+                                                                       ↓
+Layer 7: Backend-Message Queue   →  Layer 8: Backend-Auth        →  Layer 9: Backend-Logging
+                                                                       ↓
+Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 12: Backend-Scheduling (optional)
 ```
 
 **Rule:** start at Layer 1, pick one per layer; earlier choices shape later recommendations.
@@ -1045,14 +1053,14 @@ Same as frontend:
 ### Custom Option Example
 
 ```
-User: For Layer 2 I want Hono
+User: Backend-Framework I want Hono
 AI: Hono is an ultralight web framework supporting Node.js/Bun/Deno/Edge.
     - Compatible with Node.js ✅
     - Compatible with TypeScript ✅
     - Great for Edge/Serverless scenarios
     Please confirm.
 User: Confirmed
-AI: Layer 2 locked: Hono. Moving to Layer 3: API style...
+AI: Backend-Framework locked: Hono. Moving to Backend-API Style...
 ```
 
 ---

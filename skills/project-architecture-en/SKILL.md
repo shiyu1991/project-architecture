@@ -152,43 +152,89 @@ Tech selection uses **layer-by-layer interactive checkbox + capability awareness
 
 **The AI Agent MUST use the `ask_followup_question` tool for tech selection.** Plain-text tables for verbal confirmation are forbidden.
 
-Selection has two phases:
+### Header Prefix Mandatory Rule (mandatory)
 
-### Phase 1: Core Framework Selection (batch checkbox)
+**All selection question `header` (titles) MUST start with a "Frontend-" or "Backend-" prefix.** Headers without a prefix (e.g., "State Management", "Cache") are forbidden to avoid user confusion between frontend and backend layers.
 
-Present key selections (frontend framework, backend language, database, etc.) in one batch for the user to check off:
+Correct examples: `"Frontend-State Management"`, `"Backend-Cache"`, `"Frontend-UI Library"`, `"Backend-ORM/Data Access"`
+Incorrect examples: `"State Management"`, `"Cache"`, `"UI Library"`, `"ORM/Data Access"`
+
+### Frontend/Backend Separation Rule (mandatory)
+
+**Frontend and backend layer-by-layer selection MUST be done in separate phases. Mixing frontend and backend layers in the same batch of questions is forbidden.**
+
+- All frontend layers must be fully selected before starting backend selection
+- Each batch of questions may only belong to one side (all frontend or all backend) — mixed batches are forbidden
+- After frontend selection is complete, explicitly inform the user: "Frontend tech stack confirmed. Now entering backend tech selection," then begin backend selection
+
+### Three-Phase Selection
+
+### Phase 1: Core Tech Stack Selection (cross-stack batch checkbox)
+
+Present key selections (frontend framework, backend language, database, deployment, etc.) in one batch for the user to check off. Cross-stack mixing is allowed in this phase because these are global decisions:
 
 ```
 ask_followup_question({
   questions: [
-    { question: "Frontend framework?", options: ["Vue", "React", "Svelte"], multiSelect: false },
-    { question: "Backend language?", options: ["Node.js (TypeScript)", "Java", "Go", "Python"], multiSelect: false },
-    { question: "Database?", options: ["MySQL", "PostgreSQL", "MongoDB"], multiSelect: false },
+    { question: "Frontend framework?", header: "Frontend-Main Framework", options: ["Vue", "React", "Svelte"], multiSelect: false },
+    { question: "Backend language?", header: "Backend-Main Language", options: ["Node.js (TypeScript)", "Java", "Go", "Python"], multiSelect: false },
+    { question: "Database?", header: "Database", options: ["MySQL", "PostgreSQL", "MongoDB"], multiSelect: false },
+    { question: "Deployment?", header: "Deployment", options: ["Docker Compose", "Docker", "Managed Cloud"], multiSelect: false },
     ...
   ]
 })
 ```
 
-### Phase 2: Layer-by-Layer Extended Selection (linked checkbox)
+### Phase 2: Frontend Layer-by-Layer Extended Selection (frontend only, linked checkbox)
 
-Based on Phase 1 results, present compatible candidates **layer by layer**, with each layer requiring user selection:
+Based on the Phase 1 frontend framework choice, present compatible frontend candidates **layer by layer**, with each layer requiring user selection. **All questions in this phase contain only frontend layers — backend layers are forbidden.**
 
 ```
 ask_followup_question({
   questions: [
-    { question: "Language?", options: [
+    { question: "Frontend language?", header: "Frontend-Language", options: [
       "TypeScript (recommended: type safety, IDE intelligence)",
       "JavaScript (no compile overhead, low learning curve)"
     ], multiSelect: false },
-    { question: "UI component library?", options: [
+    { question: "Frontend build tool?", header: "Frontend-Build Tool", options: [
+      "Vite (recommended: instant HMR, officially recommended by Vue)",
+      "Webpack (mature ecosystem, legacy projects)"
+    ], multiSelect: false },
+    { question: "Frontend UI library?", header: "Frontend-UI Library", options: [
       "Element Plus (recommended: mature Vue 3 ecosystem, large Chinese community)",
       "Naive UI",
       "Ant Design Vue"
     ], multiSelect: false },
-    { question: "Form validation?", options: [
-      "Use Element Plus built-in validation (recommended: already covered, zero extra deps)",
-      "VeeValidate + Zod (choose when more complex validation is needed)",
-      "Zod (Schema validation only)"
+    ...
+  ]
+})
+```
+
+After all frontend layers are selected, explicitly inform the user:
+
+> Frontend tech stack confirmed. Now entering backend tech selection.
+
+### Phase 3: Backend Layer-by-Layer Extended Selection (backend only, linked checkbox)
+
+Based on the Phase 1 backend language choice, present compatible backend candidates **layer by layer**, with each layer requiring user selection. **All questions in this phase contain only backend layers — frontend layers are forbidden.**
+
+```
+ask_followup_question({
+  questions: [
+    { question: "Backend framework?", header: "Backend-Framework", options: [
+      "NestJS (recommended: modular, TS-native, IoC container)",
+      "Express (lightest, largest ecosystem)",
+      "Fastify (performance-first, schema validation)"
+    ], multiSelect: false },
+    { question: "Backend API style?", header: "Backend-API Style", options: [
+      "RESTful (recommended: universal standard, frontend-friendly)",
+      "GraphQL (flexible queries, fetch-on-demand)",
+      "gRPC (high performance, strongly typed)"
+    ], multiSelect: false },
+    { question: "Backend ORM/data access?", header: "Backend-ORM/Data Access", options: [
+      "Prisma (recommended: type-safe, schema-first)",
+      "TypeORM (decorator style)",
+      "Drizzle ORM (lightweight, SQL-style)"
     ], multiSelect: false },
     ...
   ]
@@ -198,6 +244,8 @@ ask_followup_question({
 **Key rules:**
 - 3-4 checkbox questions per batch, avoid showing too many at once
 - Each option labeled "recommended" with a one-sentence reason
+- **All question headers MUST include a "Frontend-" or "Backend-" prefix** (except Phase 1 global decisions)
+- **Mixing frontend and backend layers in the same batch is forbidden** (except Phase 1 global decisions)
 - Layers covered by the chosen framework show "use built-in" as the recommended option, but still require user confirmation
 - Companion plugins are presented as multi-select checkboxes for the user to pick as needed
 
@@ -236,13 +284,26 @@ Common capability coverage relationships (full matrix in `references/tech-stack-
 
 **Key:** "Recommend" does not mean "auto-select." Every layer must be confirmed by the user via checkbox.
 
-## 7.5 Selection Layers
+## 7.5 Selection Layers & Order (mandatory)
 
-**Frontend layers**: Main framework → Language → Build tool → UI library → CSS approach → HTTP client → State management → Router → Form validation (may be covered by UI library, but still requires confirmation) → Test framework → Code quality tools → i18n (optional)
+**Selection order mandatory rule: Phase 1 (core selection) → Phase 2 (all frontend layers) → Phase 3 (all backend layers) → cross-cutting concerns. Reordering is forbidden.**
 
-**Backend layers**: Main language → Backend framework → API style → ORM/data access → Database → Cache → Message queue → Auth → Logging → Test framework → File storage (optional) → Scheduling (optional)
+### Phase 1: Core Selection (cross-stack, mixing allowed)
 
-**Cross-cutting concerns**: after frontend and backend selection, guide the user through CI/CD and error monitoring/APM choices.
+Global decision items, mixing allowed in the same batch:
+- Frontend main framework, backend main language, database, deployment
+
+### Phase 2: All Frontend Layers (in order, backend layers forbidden)
+
+**Frontend-Main Framework** → **Frontend-Language** → **Frontend-Build Tool** → **Frontend-UI Library** → **Frontend-CSS Approach** → **Frontend-HTTP Client** → **Frontend-State Management** → **Frontend-Router** → **Frontend-Form Validation** (may be covered by UI library, but still requires confirmation) → **Frontend-Test Framework** → **Frontend-Code Quality Tools** → **Frontend-i18n** (optional)
+
+### Phase 3: All Backend Layers (in order, frontend layers forbidden)
+
+**Backend-Main Language** (selected in Phase 1) → **Backend-Framework** → **Backend-API Style** → **Backend-ORM/Data Access** → **Backend-Database** (selected in Phase 1) → **Backend-Cache** → **Backend-Message Queue** → **Backend-Auth** → **Backend-Logging** → **Backend-Test Framework** → **Backend-File Storage** (optional) → **Backend-Scheduling** (optional)
+
+### Phase 4: Cross-Cutting Concerns
+
+**After all frontend and backend selection is complete**, guide the user through CI/CD and error monitoring/APM choices.
 
 ## 7.6 Interaction Rules per Mode
 
@@ -251,6 +312,8 @@ Common capability coverage relationships (full matrix in `references/tech-stack-
 - **Expert**: batch checkboxes, more candidates per batch (Top 3-5), recommended items labeled "recommended"; user selects layer by layer
 - **All modes**: dynamic version resolution (`npm view <pkg> version` / Maven Central / Go Module Proxy / PyPI); never reuse stale version numbers
 - **All modes**: auto-filling, auto-locking, and skipping layers are forbidden. All layers must be confirmed by the user
+- **All modes**: all question headers MUST include a "Frontend-" or "Backend-" prefix (except Phase 1 global decisions)
+- **All modes**: mixing frontend and backend layers in the same batch is forbidden (except Phase 1 global decisions); complete all frontend selection before starting backend
 
 For detailed candidates, capability coverage matrix, compatibility matrices, linkage rules, and plugin recommendations, see `references/tech-stack-guide.md`.
 

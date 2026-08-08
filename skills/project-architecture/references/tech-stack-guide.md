@@ -66,7 +66,9 @@
 ### 交互式选型原则（强制）
 
 - AI Agent **必须使用 `ask_followup_question` 工具**让用户通过勾选完成选型，禁止仅用文字表格让用户口头确认
-- 选型分两阶段：阶段一选主框架/主语言，阶段二基于已选结果联动展示兼容候选
+- 选型分三阶段：阶段一选核心跨端项（主框架/主语言/数据库/部署），阶段二基于已选结果联动展示前端全部层级候选，阶段三展示后端全部层级候选
+- **前端和后端选型必须分离**：先完整选完前端所有层级，再选后端所有层级，禁止同一批问题混合前后端层级
+- **所有问题 header 必须带"前端-"或"后端-"前缀**（阶段一全局决策除外），避免用户混淆
 - 配套插件以**多选勾选**形式展示，用户按需勾选
 - 每个选项标注"推荐"标签和一句话说明，降低决策成本
 
@@ -90,16 +92,18 @@
 
 ## 2. 前端技术选型 — 分层互斥选择流程
 
+> **强制规则：** 前端选型必须在阶段二完整完成所有层级后，才进入阶段三后端选型。禁止前后端层级混批。
+
 ### 选择流程图
 
 ```
-Layer 1: 主框架      →  Layer 2: 开发语言   →  Layer 3: 构建工具
+Layer 1: 前端-主框架      →  Layer 2: 前端-开发语言   →  Layer 3: 前端-构建工具
                                                       ↓
-Layer 4: UI 组件库   →  Layer 5: CSS 方案   →  Layer 6: 网络请求库
+Layer 4: 前端-UI 组件库   →  Layer 5: 前端-CSS 方案   →  Layer 6: 前端-网络请求库
                                                       ↓
-Layer 7: 状态管理    →  Layer 8: 路由       →  Layer 9: 表单验证
+Layer 7: 前端-状态管理    →  Layer 8: 前端-路由       →  Layer 9: 前端-表单验证
                                                       ↓
-Layer 10: 测试框架   →  Layer 11: 代码质量   →  Layer 12: 国际化（按需）
+Layer 10: 前端-测试框架   →  Layer 11: 前端-代码质量   →  Layer 12: 前端-国际化（按需）
 ```
 
 **规则：** 从 Layer 1 开始逐层选择，每层选一个，前序选择影响后序推荐。
@@ -297,7 +301,8 @@ options: [
   "使用 Element Plus 内置验证（推荐，已覆盖）",
   "VeeValidate + Zod（需要复杂跨表单验证时选择）",
   "Zod（仅 Schema 验证，前后端共享）"
-]
+],
+header: "前端-表单验证"
 ```
 
 **搭配建议：** 简单表单用 UI 库内置验证；复杂表单 React 项目推荐 React Hook Form + Zod，Vue 项目推荐 VeeValidate + Zod。
@@ -574,7 +579,8 @@ AI Agent 查询能力覆盖矩阵
 ```
 ask_followup_question({
   questions: [{
-    question: "需要以下配套插件？",
+    question: "前端-需要以下配套插件？",
+    header: "前端-配套插件",
     multiSelect: true,
     options: [
       "pinia-plugin-persistedstate（状态持久化）",
@@ -608,30 +614,32 @@ ask_followup_question({
 ### 自定义示例
 
 ```
-用户：Layer 4 我想用 Arco Design
+用户：前端-UI 组件库 我想用 Arco Design
 AI Agent：Arco Design 是字节跳动的 UI 库，支持 React 和 Vue。
          - 与 Vue 兼容 ✅
          - 与 React 兼容 ✅
          - 与 Svelte 不兼容 ❌
          请确认是否使用。
 用户：确认
-AI Agent：已锁定 Layer 4: Arco Design。进入 Layer 5: CSS 方案...
+AI Agent：已锁定 前端-UI 组件库: Arco Design。进入 前端-CSS 方案...
 ```
 
 ---
 
 ## 3. 后端技术选型 — 分层互斥选择流程
 
+> **强制规则：** 后端选型在阶段三进行，必须在前端选型全部完成后才开始。禁止与前端层级混批。
+
 ### 选择流程图
 
 ```
-Layer 1: 主语言      →  Layer 2: 后端框架   →  Layer 3: API 规范
+Layer 1: 后端-主语言      →  Layer 2: 后端-框架   →  Layer 3: 后端-API 规范
                                                       ↓
-Layer 4: ORM/数据访问 →  Layer 5: 数据库     →  Layer 6: 缓存方案
+Layer 4: 后端-ORM/数据访问 →  Layer 5: 后端-数据库     →  Layer 6: 后端-缓存方案
                                                       ↓
-Layer 7: 消息队列    →  Layer 8: 认证方案   →  Layer 9: 日志系统
+Layer 7: 后端-消息队列    →  Layer 8: 后端-认证方案   →  Layer 9: 后端-日志系统
                                                       ↓
-Layer 10: 测试框架   →  Layer 11: 文件存储   →  Layer 12: 定时任务（按需）
+Layer 10: 后端-测试框架   →  Layer 11: 后端-文件存储   →  Layer 12: 后端-定时任务（按需）
 ```
 
 **规则：** 从 Layer 1 开始逐层选择，每层选一个，前序选择影响后序推荐。
@@ -1045,14 +1053,14 @@ Layer 10: 测试框架   →  Layer 11: 文件存储   →  Layer 12: 定时任�
 ### 自定义示例
 
 ```
-用户：Layer 2 我想用 Hono
+用户：后端-框架 我想用 Hono
 AI Agent：Hono 是超轻量 Web 框架，支持 Node.js/Bun/Deno/Edge。
          - 与 Node.js 兼容 ✅
          - 与 TypeScript 兼容 ✅
          - 适合 Edge/Serverless 场景
          请确认是否使用。
 用户：确认
-AI Agent：已锁定 Layer 2: Hono。进入 Layer 3: API 规范...
+AI Agent：已锁定 后端-框架: Hono。进入 后端-API 规范...
 ```
 
 ---
