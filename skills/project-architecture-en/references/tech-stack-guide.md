@@ -7,7 +7,7 @@
 
 ## 0. Dynamic Decision Protocol (highest priority)
 
-This document provides **candidates and selection criteria**, not fixed answers. The AI Agent MUST follow these three protocols:
+This document provides **candidates and selection criteria**, not fixed answers. The AI Agent MUST follow these four protocols:
 
 ### 0.1 Dynamic Version Resolution
 
@@ -39,6 +39,54 @@ Decide between same-layer candidates using these signals, and explain the reason
 - Compatibility matrices here mark only **structural bindings** (relationships that don't change over time, e.g., Pinia only supports Vue).
 - Version-level compatibility (the framework version range a plugin supports) must be confirmed live via `peerDependencies` or official docs at selection time.
 
+### 0.4 Dynamic Candidate Research (mandatory)
+
+The candidate tables in this document are a **reference baseline at the time of writing**, not a closed list. The tech ecosystem evolves continuously. The AI Agent MUST perform dynamic research at selection time:
+
+**Mandatory research flow:**
+
+1. **Live search** — Before presenting candidates, the AI Agent MUST use the `web_search` tool to search for current mainstream options for that layer. Example query keywords:
+   - `"best [layer name] framework 2025"` (e.g., `best Vue state management 2025`)
+   - `"[tech name] alternatives 2025"` (e.g., `Prisma alternatives 2025`)
+   - `"[layer] ecosystem trends"` (e.g., `frontend build tools trends`)
+
+2. **Merge candidates** — Combine search results with the document's reference baseline:
+   - Keep baseline options (unless search shows they are deprecated/unmaintained)
+   - Add newly discovered emerging options (label "emerging")
+   - Remove or label "outdated" for options the search shows are no longer active
+
+3. **Activity verification** — Verify each candidate's activity level:
+   - GitHub stars and recent commit frequency
+   - Latest release date (label "maintenance stalled" if no update for 1+ year)
+   - Community engagement (npm downloads / Stack Overflow activity)
+
+4. **Candidate presentation** — The final candidate list shown to the user is the dynamically merged result, with each item labeled:
+   - "recommended" + one-sentence reason (based on current context and search results)
+   - "emerging" (a rising new solution found via search)
+   - "outdated" (no longer active legacy option, kept for reference only)
+
+**Research frequency:**
+- Each selection layer MUST execute a `web_search` before presenting candidates
+- Within the same session, the same layer is not researched twice (cache results)
+- Research results are NOT written to the skill document — used only for the current selection session
+
+**Example:**
+```
+# Layer 7: State Management (Vue Ecosystem)
+
+# AI Agent executes web_search: "best Vue state management 2025"
+# Results: Pinia remains the mainstream recommendation, Vue officially maintained; new X state lib appeared
+
+# Merged candidates shown to user:
+options: [
+  "Pinia (recommended: Vue official, TypeScript-friendly, most mature ecosystem)",
+  "X lib (emerging: 2025 new solution, focuses on XX features)",
+  "Vuex (outdated: official migration to Pinia recommended, legacy projects only)"
+]
+```
+
+**Key principle:** The tables in this document are the "starting point," not the "destination." The AI Agent is responsible for ensuring that what is recommended to the user reflects the current tech landscape, not a snapshot from when this document was written.
+
 ---
 
 ## 1. Selection Principles
@@ -59,7 +107,7 @@ Technology choices must weigh:
 
 - Proceed **layer by layer in order**; earlier choices constrain later options
 - Within each layer, options are **mutually exclusive** — pick exactly one
-- Offer **Top 3 common candidates** per layer (ordering reflects popularity only, not a mandate; the AI decides per protocol 0.2 using context)
+- Offer **Top 3 common candidates** per layer (tables in this document are a reference baseline at time of writing; the AI Agent MUST dynamically research and merge latest candidates per protocol 0.4 before presenting)
 - Users may **skip recommendations** and enter any custom option
 - The AI Agent only raises **compatibility warnings** for custom choices — never overrides them
 

@@ -148,7 +148,7 @@ In Product mode, this phase outputs a **domain-model sketch + core user flows** 
 
 # 7. Tech Selection Overview
 
-Tech selection uses **layer-by-layer interactive checkbox + capability awareness + linkage recommendations**: the AI Agent MUST use the `ask_followup_question` tool to let users select via checkboxes, not plain text recommendations; during selection, detect the chosen framework's built-in capabilities and label "covered" hints in subsequent layers; link-recommend compatible companion frameworks and plugins.
+Tech selection uses **layer-by-layer interactive checkbox + dynamic research + capability awareness + linkage recommendations**: the AI Agent MUST use the `ask_followup_question` tool to let users select via checkboxes, not plain text recommendations; before presenting candidates at each layer, the AI MUST use `web_search` to dynamically research the current tech landscape (see `references/tech-stack-guide.md` protocol 0.4) — the document tables serve only as a reference baseline; during selection, detect the chosen framework's built-in capabilities and label "covered" hints in subsequent layers; link-recommend compatible companion frameworks and plugins.
 
 ## 7.1 Supreme Principle: The User Always Has the Final Say (mandatory)
 
@@ -393,6 +393,7 @@ Users may change a previously selected option during or after selection:
 - **Product**: show recommended lists in batches, each item labeled "recommended"; user confirms or tweaks batch by batch
 - **Expert**: batch checkboxes, more candidates per batch (Top 3-5), recommended items labeled "recommended"; user selects layer by layer
 - **All modes**: dynamic version resolution (`npm view <pkg> version` / Maven Central / Go Module Proxy / PyPI); never reuse stale version numbers
+- **All modes**: before presenting candidates at each layer, MUST execute `web_search` to dynamically research and merge latest options; document tables are only a reference baseline (per tech-stack-guide.md protocol 0.4)
 - **All modes**: auto-filling, auto-locking, and skipping layers are forbidden. All layers must be confirmed by the user
 - **All modes**: all question headers MUST include a "Frontend-" or "Backend-" prefix (except Phase 1 global decisions)
 - **All modes**: mixing frontend and backend layers in the same batch is forbidden (except Phase 1 global decisions); complete all frontend selection before starting backend
