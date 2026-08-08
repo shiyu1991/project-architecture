@@ -63,6 +63,20 @@
 - 用户可**跳过推荐**，自主输入任意方案
 - AI Agent 对自定义选择仅做**兼容性提示**，不强制覆盖
 
+### 交互式选型原则（强制）
+
+- AI Agent **必须使用 `ask_followup_question` 工具**让用户通过勾选完成选型，禁止仅用文字表格让用户口头确认
+- 选型分两阶段：阶段一选主框架/主语言，阶段二基于已选结果联动展示兼容候选
+- 配套插件以**多选勾选**形式展示，用户按需勾选
+- 每个选项标注"推荐"标签和一句话说明，降低决策成本
+
+### 能力覆盖感知原则（强制）
+
+- 用户选择某框架后，AI Agent **必须检查该框架是否已覆盖后续某层能力**
+- 若已覆盖：该层标记为"已覆盖，使用内置"，默认跳过，不单独推荐第三方库
+- 若用户需求超出内置能力：才推荐独立方案，并标注"内置能力不足时选择"
+- 详见第 4 节「框架能力覆盖矩阵」
+
 ---
 
 ## 2. 前端技术选型 — 分层互斥选择流程
@@ -246,17 +260,38 @@ Layer 10: 测试框架   →  Layer 11: 代码质量   →  Layer 12: 国际化�
 
 ---
 
-### Layer 9: 表单验证（互斥选一）
+### Layer 9: 表单验证（可能被 UI 组件库覆盖）
 
-| 方案 | 特点 | 适用场景 |
-|------|------|----------|
-| Zod | Schema 验证、TypeScript 推断、框架无关 | 所有项目（通用推荐） |
-| React Hook Form | React 表单性能最佳、与 Zod 搭配 | React 项目 |
-| VeeValidate | Vue 生态表单验证、组件式 API | Vue 项目 |
+> **能力覆盖提示：** 以下 UI 组件库自带表单验证能力，选择后默认跳过此层：
+> - **Element Plus** — 内置 `el-form` 验证规则，支持必填、长度、自定义校验器
+> - **Ant Design** — 内置 `Form` 组件验证，支持声明式规则
+> - **Naive UI** — 内置 `n-form` 验证，支持自定义校验
+> - **Ant Design Vue** — 内置表单验证，与 Ant Design 一致
+>
+> **仅当以下情况需要独立表单验证库：**
+> - 跨组件/跨表单的复杂联动验证
+> - 需要 Schema 级别的类型推断（TypeScript 项目）
+> - 需要前后端共享验证 Schema
 
-**互斥原则：** 只能选择一个表单验证方案。
+| 方案 | 特点 | 适用场景 | 能力覆盖状态 |
+|------|------|----------|-------------|
+| 使用 UI 库内置验证 | 零额外依赖、与组件深度集成 | 大多数项目（默认推荐） | Element Plus / Ant Design / Naive UI 已覆盖 |
+| Zod | Schema 验证、TypeScript 推断、框架无关 | 需要前后端共享 Schema、类型推断 | 独立方案，内置不足时选择 |
+| React Hook Form + Zod | React 表单性能最佳 + Schema 验证 | React 项目复杂表单 | 独立方案，内置不足时选择 |
+| VeeValidate + Zod | Vue 生态表单验证 + Schema 验证 | Vue 项目复杂表单 | 独立方案，内置不足时选择 |
 
-**搭配建议：** React 项目推荐 React Hook Form + Zod；Vue 项目推荐 VeeValidate + Zod。
+**互斥原则：** 只能选择一个表单验证方案（"使用内置"也算一个选项）。
+
+**交互式勾选示例：**
+```
+options: [
+  "使用 Element Plus 内置验证（推荐，已覆盖）",
+  "VeeValidate + Zod（需要复杂跨表单验证时选择）",
+  "Zod（仅 Schema 验证，前后端共享）"
+]
+```
+
+**搭配建议：** 简单表单用 UI 库内置验证；复杂表单 React 项目推荐 React Hook Form + Zod，Vue 项目推荐 VeeValidate + Zod。
 
 ---
 
@@ -408,7 +443,143 @@ Layer 10: 测试框架   →  Layer 11: 代码质量   →  Layer 12: 国际化�
 
 ---
 
-## 2.3 用户自定义入口
+## 2.3 框架能力覆盖矩阵（消除冗余推荐）
+
+> **核心目标：** 用户选择某框架后，AI Agent 自动检测该框架已覆盖的能力，对后续层级标记"已覆盖"并默认跳过，避免推荐冗余的第三方库。
+
+### 前端框架能力覆盖
+
+| 已选框架 | 覆盖的层级 | 覆盖能力说明 | 默认策略 |
+|----------|-----------|-------------|----------|
+| **Element Plus** (Vue) | L9 表单验证 | `el-form` + `el-form-item` 内置验证规则 | 跳过 L9，标记"已覆盖" |
+| **Ant Design** (React) | L9 表单验证 | `Form` + `Form.Item` 内置验证规则 | 跳过 L9，标记"已覆盖" |
+| **Ant Design Vue** (Vue) | L9 表单验证 | 与 Ant Design 一致的表单验证 | 跳过 L9，标记"已覆盖" |
+| **Naive UI** (Vue) | L9 表单验证 | `n-form` 内置验证 | 跳过 L9，标记"已覆盖" |
+| **MUI** (React) | L9 表单验证 | `FormControl` + `TextField` 验证 | 跳过 L9，标记"已覆盖" |
+| **Vue Router** | L8 路由 | 官方路由方案 | 自动锁定，不再询问 |
+| **React Router** | L8 路由 | React 生态标准路由 | 自动锁定，不再询问 |
+| **Next.js** | L3 构建 + L8 路由 | 内置 Turbopack 构建 + App Router | 自动锁定 L3 和 L8 |
+| **SvelteKit** | L3 构建 + L8 路由 | 内置 Vite 构建 + 文件路由 | 自动锁定 L3 和 L8 |
+| **Nuxt** (Vue) | L3 构建 + L8 路由 | 内置 Vite 构建 + 文件路由 | 自动锁定 L3 和 L8 |
+
+### 后端框架能力覆盖
+
+| 已选框架 | 覆盖的层级 | 覆盖能力说明 | 默认策略 |
+|----------|-----------|-------------|----------|
+| **NestJS** | L8 认证 | `@nestjs/passport` 集成 Passport 策略 | 推荐 Passport 插件而非独立方案 |
+| **Spring Boot** | L8 认证 | Spring Security 生态 | 推荐 Spring Security 而非独立方案 |
+| **Spring Boot** | L9 日志 | Logback 内置 | 跳过 L9，标记"已覆盖" |
+| **Spring Boot** | L12 定时任务 | `@Scheduled` 内置 | 简单场景跳过 L12 |
+| **NestJS** | L12 定时任务 | `@nestjs/schedule` 内置 | 简单场景跳过 L12 |
+| **Django** (Python) | L4 ORM | Django ORM 内置 | 跳过 L4，标记"已覆盖" |
+| **Django** (Python) | L8 认证 | Django Auth 内置 | 跳过 L8，标记"已覆盖" |
+| **FastAPI** (Python) | L9 日志 | Uvicorn 日志集成 | 简单场景跳过 L9 |
+
+### 能力覆盖决策流程
+
+```
+用户选择框架 X
+    ↓
+AI Agent 查询能力覆盖矩阵
+    ↓
+框架 X 覆盖了层级 L？
+    ├── 是 → 标记 L 为"已覆盖，使用内置"
+    │        └── 用户是否需要超出内置能力？
+    │            ├── 否 → 跳过 L，不推荐第三方库
+    │            └── 是 → 推荐独立方案，标注"内置能力不足时选择"
+    └── 否 → 正常展示 L 的候选方案
+```
+
+---
+
+## 2.4 分层联动规则（选A自动推荐B）
+
+> **核心目标：** 前序选择自动筛选后序可选项，联动推荐配套框架和插件，以交互式多选勾选展示。
+
+### 前端联动规则
+
+| 已选（前序） | 自动联动（后序） | 联动方式 |
+|-------------|----------------|----------|
+| Vue | L4 只展示 Vue 生态组件库 | 过滤候选 |
+| Vue | L7 推荐 Pinia | 默认填充 |
+| Vue | L8 锁定 Vue Router | 自动锁定 |
+| Vue | L10 推荐 Vitest | 默认填充 |
+| React | L4 只展示 React 生态组件库 | 过滤候选 |
+| React | L7 推荐 Zustand（中小型）/ Redux Toolkit（大型） | 默认填充 |
+| React | L8 推荐 React Router | 默认填充 |
+| Svelte | L4 只展示 Svelte 生态组件库 | 过滤候选 |
+| Svelte | L7 锁定 Svelte Stores | 自动锁定 |
+| Svelte | L8 锁定 SvelteKit 路由 | 自动锁定 |
+| Vite (L3) | L10 推荐 Vitest | 默认填充 |
+| Next.js (L1+L3) | L8 锁定 App Router | 自动锁定 |
+| TailwindCSS (L5) | L11 加 TailwindCSS 类名排序插件 | 推荐插件 |
+
+### 后端联动规则
+
+| 已选（前序） | 自动联动（后序） | 联动方式 |
+|-------------|----------------|----------|
+| Node.js | L4 只展示 Node 生态 ORM | 过滤候选 |
+| Node.js | L9 推荐 Pino | 默认填充 |
+| NestJS | L8 推荐 `@nestjs/passport` | 推荐插件 |
+| NestJS | L10 推荐 Jest | 默认填充 |
+| Java | L4 只展示 Java 生态 ORM | 过滤候选 |
+| Spring Boot | L9 锁定 Logback | 自动锁定 |
+| Spring Boot | L8 推荐 Spring Security | 默认填充 |
+| Go | L4 只展示 Go 生态 ORM | 过滤候选 |
+| Go | L9 推荐 Zap | 默认填充 |
+| Gin | L8 推荐 `golang-jwt/jwt` | 推荐插件 |
+| Prisma | L5 兼容 MySQL / PostgreSQL / MongoDB | 过滤候选 |
+| MyBatis Plus | L5 兼容 MySQL / PostgreSQL | 过滤候选 |
+
+### 配套插件联动（多选勾选展示）
+
+用户选择主框架后，配套插件以**多选勾选**形式展示，用户按需勾选：
+
+**Vue 生态配套插件：**
+
+| 主框架 | 配套插件 | 用途 | 勾选默认 |
+|--------|---------|------|---------|
+| Vue + Pinia | `pinia-plugin-persistedstate` | 状态持久化 | 推荐勾选 |
+| Vue + Vite | `unplugin-auto-import` | API 自动导入 | 推荐勾选 |
+| Vue + Vite | `unplugin-vue-components` | 组件自动导入 | 推荐勾选 |
+| Vue + Vue Router | `unplugin-vue-router` | 文件路由 | 可选 |
+
+**React 生态配套插件：**
+
+| 主框架 | 配套插件 | 用途 | 勾选默认 |
+|--------|---------|------|---------|
+| React + Zustand | `zustand/middleware` (persist) | 状态持久化 | 推荐勾选 |
+| React + Redux Toolkit | `redux-persist` | 状态持久化 | 推荐勾选 |
+| React + Next.js | `next-auth` | 认证方案 | 按需 |
+
+**NestJS 生态配套插件：**
+
+| 框架 | 配套插件 | 用途 | 勾选默认 |
+|------|---------|------|---------|
+| NestJS | `@nestjs/swagger` | Swagger 文档 | 推荐勾选 |
+| NestJS | `@nestjs/throttler` | 限流保护 | 推荐勾选 |
+| NestJS | `@nestjs/passport` | 认证策略 | 认证必选 |
+| NestJS | `@nestjs/schedule` | 定时任务 | 按需 |
+
+**交互式勾选示例：**
+```
+ask_followup_question({
+  questions: [{
+    question: "需要以下配套插件？",
+    multiSelect: true,
+    options: [
+      "pinia-plugin-persistedstate（状态持久化）",
+      "unplugin-auto-import（API 自动导入）",
+      "unplugin-vue-components（组件自动导入）",
+      "unplugin-vue-router（文件路由）"
+    ]
+  }]
+})
+```
+
+---
+
+## 2.5 用户自定义入口
 
 ### 自定义规则
 
@@ -600,35 +771,45 @@ Layer 10: 测试框架   →  Layer 11: 文件存储   →  Layer 12: 定时任�
 
 ### Layer 8: 认证方案（互斥选一）
 
-| 方案 | 特点 | 适用场景 |
-|------|------|----------|
-| JWT | 无状态、跨域友好、移动端适配、生态广 | 前后端分离、移动端（推荐） |
-| OAuth2 / OIDC | 第三方认证标准、SSO、社交登录 | SSO、第三方登录、企业认证 |
-| Session + Cookie | 传统方案、服务端控制、可强制下线 | 传统 Web 应用、服务端渲染 |
+> **能力覆盖提示：** 以下后端框架自带认证集成，选择后优先推荐框架内置方案：
+> - **NestJS** — `@nestjs/passport` 集成 Passport 策略，推荐使用而非独立方案
+> - **Spring Boot** — Spring Security 生态，推荐使用而非独立方案
+> - **Django** — Django Auth 内置认证系统，简单场景跳过此层
+
+| 方案 | 特点 | 适用场景 | 能力覆盖状态 |
+|------|------|----------|-------------|
+| JWT | 无状态、跨域友好、移动端适配、生态广 | 前后端分离、移动端（推荐） | NestJS 用 `@nestjs/passport` + JWT 策略 |
+| OAuth2 / OIDC | 第三方认证标准、SSO、社交登录 | SSO、第三方登录、企业认证 | Spring Security OAuth2 |
+| Session + Cookie | 传统方案、服务端控制、可强制下线 | 传统 Web 应用、服务端渲染 | Django Auth 内置 |
 
 **互斥原则：** 只能选择一个认证主方案。
 
-**建议：** 前后端分离用 JWT；需要 SSO 或社交登录用 OAuth2/OIDC；传统 SSR 用 Session。
+**建议：** 前后端分离用 JWT；需要 SSO 或社交登录用 OAuth2/OIDC；传统 SSR 用 Session。NestJS 项目推荐 `@nestjs/passport` + JWT 策略。
 
 ---
 
 ### Layer 9: 日志系统（根据主语言推荐）
 
+> **能力覆盖提示：** 以下框架自带日志系统，简单场景可跳过此层：
+> - **Spring Boot** — Logback 内置，默认覆盖
+> - **NestJS** — 内置 Logger，简单场景可跳过
+> - **FastAPI** — Uvicorn 日志集成，简单场景可跳过
+
 #### Java 生态
 
-| 方案 | 特点 | 适用场景 |
-|------|------|----------|
-| Logback | Spring Boot 默认、性能好、配置灵活 | Spring Boot 项目（默认） |
-| Log4j2 | 异步日志、性能最优 | 高性能日志需求 |
-| SLF4J + 自选实现 | 接口标准、可切换实现 | 需要灵活切换日志实现 |
+| 方案 | 特点 | 适用场景 | 能力覆盖状态 |
+|------|------|----------|-------------|
+| Logback | Spring Boot 默认、性能好、配置灵活 | Spring Boot 项目（默认） | Spring Boot 已内置 |
+| Log4j2 | 异步日志、性能最优 | 高性能日志需求 | 内置不足时选择 |
+| SLF4J + 自选实现 | 接口标准、可切换实现 | 需要灵活切换日志实现 | 内置不足时选择 |
 
 #### Node.js 生态
 
-| 方案 | 特点 | 适用场景 |
-|------|------|----------|
-| Pino | 性能最优、JSON 日志、传输流 | 高性能服务（推荐） |
-| Winston | 最流行、多传输、灵活配置 | 通用项目 |
-| 框架内置 Logger | 零依赖、框架集成 | 小型项目 |
+| 方案 | 特点 | 适用场景 | 能力覆盖状态 |
+|------|------|----------|-------------|
+| Pino | 性能最优、JSON 日志、传输流 | 高性能服务（推荐） | 独立方案 |
+| Winston | 最流行、多传输、灵活配置 | 通用项目 | 独立方案 |
+| 框架内置 Logger | 零依赖、框架集成 | 小型项目 | NestJS 已内置，简单场景可跳过 |
 
 #### Go 生态
 
@@ -690,13 +871,17 @@ Layer 10: 测试框架   →  Layer 11: 文件存储   →  Layer 12: 定时任�
 
 ### Layer 12: 定时任务（按需，可跳过）
 
+> **能力覆盖提示：** 以下框架自带定时任务能力，简单场景可跳过此层：
+> - **Spring Boot** — `@Scheduled` 内置，简单定时任务已覆盖
+> - **NestJS** — `@nestjs/schedule` 内置，简单定时任务已覆盖
+
 #### Java 生态
 
-| 方案 | 特点 | 适用场景 |
-|------|------|----------|
-| Spring @Scheduled | Spring Boot 内置、零依赖、注解式 | 单机定时任务（简单场景） |
-| XXL-Job | 分布式调度、可视化界面、动态配置 | 分布式定时任务（国内团队推荐） |
-| Quartz | 功能全、集群支持、持久化 | 复杂调度需求 |
+| 方案 | 特点 | 适用场景 | 能力覆盖状态 |
+|------|------|----------|-------------|
+| Spring @Scheduled | Spring Boot 内置、零依赖、注解式 | 单机定时任务（简单场景） | Spring Boot 已内置 |
+| XXL-Job | 分布式调度、可视化界面、动态配置 | 分布式定时任务（国内团队推荐） | 内置不足时选择 |
+| Quartz | 功能全、集群支持、持久化 | 复杂调度需求 | 内置不足时选择 |
 
 #### Node.js 生态
 

@@ -127,21 +127,101 @@ AI："使用 Vue + SpringBoot + MySQL"   ← 错误，跳过了业务分析
 
 # 七、技术选型总览
 
-技术选型采用**分层互斥引导式选择**：按层级顺序逐步选择，前序选择影响后序可选项；同一层级内互斥选一；每层给出 Top 3 候选（版本号实时查询，不写死）；用户可跳过推荐自定义，AI 仅做兼容性提示。
+技术选型采用**交互式勾选 + 能力感知 + 分层联动**模式：使用 `ask_followup_question` 工具让用户通过勾选完成选型，而非纯文字推荐；选型过程中自动感知已选框架的能力覆盖范围，跳过冗余层级，并联动推荐配套框架和插件。
 
-**前端 12 层**：主框架 → 开发语言 → 构建工具 → UI 组件库 → CSS 方案 → 网络请求库 → 状态管理 → 路由 → 表单验证 → 测试框架 → 代码质量工具 → 国际化（按需）
+## 7.1 交互式选型流程（强制）
 
-**后端 12 层**：主语言 → 后端框架 → API 规范 → ORM/数据访问 → 数据库 → 缓存 → 消息队列 → 认证 → 日志 → 测试框架 → 文件存储（按需）→ 定时任务（按需）
+**AI Agent 必须使用 `ask_followup_question` 工具进行技术选型**，禁止仅用文字表格让用户口头确认。
+
+选型分两阶段：
+
+### 阶段一：技术栈主框架选择（批量勾选）
+
+一次性向用户展示前端主框架、后端主语言/框架等核心选型，用户通过勾选完成：
+
+```
+ask_followup_question({
+  questions: [
+    { question: "前端主框架？", options: ["Vue", "React", "Svelte"], multiSelect: false },
+    { question: "后端主语言？", options: ["Node.js (TypeScript)", "Java", "Go", "Python"], multiSelect: false },
+    { question: "数据库？", options: ["MySQL", "PostgreSQL", "MongoDB"], multiSelect: false },
+    ...
+  ]
+})
+```
+
+### 阶段二：基于已选框架的拓展选择（联动勾选）
+
+根据阶段一的选择结果，自动筛选并展示兼容的候选方案，同时标注哪些层已被已选框架覆盖（可跳过）：
+
+```
+ask_followup_question({
+  questions: [
+    { question: "UI 组件库？", options: ["Element Plus (推荐)", "Naive UI", "Ant Design Vue"], multiSelect: false },
+    { question: "表单验证方案？", options: [
+      "使用 Element Plus 内置验证（推荐，已覆盖）",
+      "VeeValidate + Zod（需要更复杂验证时选择）",
+      "Zod（仅 Schema 验证）"
+    ], multiSelect: false },
+    { question: "需要以下配套插件？", options: [
+      "pinia-plugin-persistedstate（状态持久化）",
+      "unplugin-auto-import（API 自动导入）",
+      "unplugin-vue-components（组件自动导入）"
+    ], multiSelect: true },
+    ...
+  ]
+})
+```
+
+## 7.2 能力感知与冗余消除（强制）
+
+**AI Agent 必须感知已选框架自带的能力，对后续层级自动标记"已覆盖"或调整推荐。**
+
+核心规则：
+
+1. **能力覆盖检测** — 用户选择某框架后，AI Agent 检查该框架是否已覆盖后续某层的能力
+2. **自动跳过** — 若已覆盖且无更高需求，该层标记为"已覆盖，使用内置"，不单独推荐第三方库
+3. **升级提示** — 若用户需求超出内置能力，才推荐独立方案并说明"内置能力不足时选择"
+4. **多选插件** — 配套插件以多选勾选形式展示，用户按需勾选
+
+常见能力覆盖关系（完整矩阵见 `references/tech-stack-guide.md` 第 4 节）：
+
+| 已选框架 | 覆盖的层级 | 默认策略 |
+|----------|-----------|----------|
+| Element Plus (Vue) | L9 表单验证 | 标记"已覆盖"，除非需要跨组件复杂验证 |
+| Ant Design (React) | L9 表单验证 | 标记"已覆盖"，除非需要跨组件复杂验证 |
+| NestJS | L8 认证（Passport 集成） | 推荐 `@nestjs/passport` 而非独立方案 |
+| Vue Router | L8 路由 | 自动锁定，不再询问 |
+| SvelteKit | L8 路由 + L3 构建 | 自动锁定，不再询问 |
+| Next.js | L3 构建 + L8 路由 | 自动锁定，不再询问 |
+
+## 7.3 分层联动规则
+
+**前序选择自动影响后序可选项和推荐。**
+
+- 选 Vue → L4 只展示 Vue 生态组件库，L7 推荐 Pinia，L8 锁定 Vue Router
+- 选 React → L4 只展示 React 生态组件库，L7 推荐 Zustand/Redux Toolkit，L8 推荐 React Router
+- 选 Svelte → L4 只展示 Svelte 生态组件库，L7 锁定 Svelte Stores，L8 锁定 SvelteKit 路由
+- 选 Node.js → L4 只展示 Node 生态 ORM，L9 推荐 Pino
+- 选 Java → L4 只展示 Java 生态 ORM，L9 推荐 Logback
+- 选 Go → L4 只展示 Go 生态 ORM，L9 推荐 Zap
+
+## 7.4 选型层级
+
+**前端层级**：主框架 → 开发语言 → 构建工具 → UI 组件库 → CSS 方案 → 网络请求库 → 状态管理 → 路由 → 表单验证（可能被 UI 库覆盖）→ 测试框架 → 代码质量工具 → 国际化（按需）
+
+**后端层级**：主语言 → 后端框架 → API 规范 → ORM/数据访问 → 数据库 → 缓存 → 消息队列 → 认证 → 日志 → 测试框架 → 文件存储（按需）→ 定时任务（按需）
 
 **跨端关注点**：前后端选型完成后，引导选择 CI/CD 方案和错误监控/APM 方案。
 
-交互规则按模式调整：
+## 7.5 交互规则按模式调整
 
-- 引导模式：每层只问"推荐 X，因为（一句人话）。用推荐吗？"，批量确认，不打断节奏
-- 专家模式：逐层展开 Top 3 对比表格
-- 任何模式：动态版本解析（`npm view <pkg> version` / Maven Central / Go Module Proxy / PyPI），禁止沿用历史版本号
+- **引导模式**：每批 3-4 个勾选问题，每项标注"推荐"和一句人话解释，用户勾选确认
+- **产品模式**：一次性展示完整推荐清单（已预填默认值），用户确认或微调
+- **专家模式**：分批勾选，每批展示更多候选（Top 3-5），默认项自动填充，用户快速调整
+- **任何模式**：动态版本解析（`npm view <pkg> version` / Maven Central / Go Module Proxy / PyPI），禁止沿用历史版本号
 
-详细候选方案、选择信号、兼容性矩阵、子插件推荐见 `references/tech-stack-guide.md`。
+详细候选方案、能力覆盖矩阵、兼容性矩阵、联动规则、子插件推荐见 `references/tech-stack-guide.md`。
 
 ---
 

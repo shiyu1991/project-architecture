@@ -28,7 +28,9 @@
 |------|------|
 | 三档用户模式 | 技术小白全程引导 / 产品经理业务建模 / 开发者快速过层，自动识别 |
 | 规模分级 | S/M/L 三级判定，小项目不套大架构，反过度工程 |
-| 分层互斥选型 | 前后端各 12 层，Top 3 候选 + 上下文信号决策 + 实时版本解析 |
+| 交互式勾选选型 | 使用 `ask_followup_question` 工具让用户勾选技术栈，分两阶段：主框架选择 + 基于已选结果的联动拓展选择 |
+| 能力覆盖感知 | 自动检测已选框架自带能力（如 Element Plus 表单验证、Spring Boot 日志），跳过冗余层级，消除重复推荐 |
+| 分层联动推荐 | 选 A 自动推荐 B，前序选择自动筛选后序可选项，配套插件以多选勾选展示 |
 | 兼容性矩阵 | 结构性绑定即时校验，版本级兼容实时查证 |
 | Core + DDD 架构 | 前后端分离的 Core 结构、DDD 业务模块、复用红线 |
 | ADR 决策记录 | 重要决策留痕，AI 换会话不失忆 |
@@ -101,7 +103,9 @@ This Skill encodes a senior architect's working method as an enforceable protoco
 |-----------|-------------|
 | Three user modes | Fully-guided for beginners / business modeling for PMs / fast-track for developers |
 | Scale tiers | S/M/L classification — small projects never get big architectures |
-| Layered exclusive selection | 12 layers each for FE & BE: Top 3 candidates + context-signal decisions + live version resolution |
+| Interactive checkbox selection | Uses `ask_followup_question` tool for users to check off tech choices; two phases: core framework selection + linked extended selection based on prior choices |
+| Capability awareness | Auto-detects built-in capabilities of chosen frameworks (e.g., Element Plus form validation, Spring Boot logging) and skips redundant layers — no duplicate recommendations |
+| Layered linkage recommendations | Choosing A auto-recommends B; earlier choices filter later options; companion plugins shown as multi-select checkboxes |
 | Compatibility matrices | Instant structural checks; version-level compatibility verified live |
 | Core + DDD architecture | Separate Core structures for FE & BE, DDD modules, reuse red lines |
 | ADR decision records | Decisions persist across AI sessions |

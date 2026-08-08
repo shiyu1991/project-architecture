@@ -63,6 +63,20 @@ Technology choices must weigh:
 - Users may **skip recommendations** and enter any custom option
 - The AI Agent only raises **compatibility warnings** for custom choices — never overrides them
 
+### Interactive Selection Principle (mandatory)
+
+- The AI Agent **MUST use the `ask_followup_question` tool** to let users select via checkboxes — plain-text tables for verbal confirmation are forbidden
+- Selection has two phases: Phase 1 selects main framework/language; Phase 2 shows compatible candidates based on Phase 1 results
+- Companion plugins are presented as **multi-select checkboxes** for the user to pick as needed
+- Each option is labeled "recommended" with a one-sentence explanation to reduce decision cost
+
+### Capability Awareness Principle (mandatory)
+
+- After the user picks a framework, the AI Agent **MUST check whether it already covers a later layer's capability**
+- If covered: mark that layer as "covered — use built-in", skip by default, and do not recommend a third-party library
+- If the user's needs exceed the built-in capability: only then recommend a standalone solution, labeled "choose when built-in is insufficient"
+- See section 2.3 "Framework Capability Coverage Matrix" for details
+
 ---
 
 ## 2. Frontend Tech Selection — Layered Exclusive Flow
@@ -246,17 +260,38 @@ Layer 10: Test framework →  Layer 11: Code quality →  Layer 12: i18n (option
 
 ---
 
-### Layer 9: Form Validation (pick one)
+### Layer 9: Form Validation (may be covered by UI library)
 
-| Option | Traits | Best for |
-|--------|--------|----------|
-| Zod | Schema validation, TypeScript inference, framework-agnostic | All projects (general recommendation) |
-| React Hook Form | Best React form performance, pairs with Zod | React projects |
-| VeeValidate | Vue ecosystem form validation, component-style API | Vue projects |
+> **Capability coverage note:** The following UI libraries have built-in form validation. When selected, this layer is skipped by default:
+> - **Element Plus** — built-in `el-form` validation rules: required, length, custom validators
+> - **Ant Design** — built-in `Form` component validation with declarative rules
+> - **Naive UI** — built-in `n-form` validation with custom validators
+> - **Ant Design Vue** — built-in form validation, consistent with Ant Design
+>
+> **A standalone form validation library is needed only when:**
+> - Cross-component / cross-form complex linked validation is required
+> - Schema-level type inference is needed (TypeScript projects)
+> - Validation schemas need to be shared between frontend and backend
 
-**Exclusivity:** exactly one form validation solution.
+| Option | Traits | Best for | Coverage status |
+|--------|--------|----------|----------------|
+| Use UI library built-in validation | Zero extra deps, deep integration with components | Most projects (default recommendation) | Element Plus / Ant Design / Naive UI already cover this |
+| Zod | Schema validation, TypeScript inference, framework-agnostic | Needs shared FE/BE schema, type inference | Standalone — choose when built-in is insufficient |
+| React Hook Form + Zod | Best React form performance + schema validation | React projects with complex forms | Standalone — choose when built-in is insufficient |
+| VeeValidate + Zod | Vue ecosystem form validation + schema validation | Vue projects with complex forms | Standalone — choose when built-in is insufficient |
 
-**Pairing tip:** React → React Hook Form + Zod; Vue → VeeValidate + Zod.
+**Exclusivity:** exactly one form validation solution ("use built-in" counts as an option).
+
+**Interactive checkbox example:**
+```
+options: [
+  "Use Element Plus built-in validation (recommended, already covered)",
+  "VeeValidate + Zod (choose when complex cross-form validation is needed)",
+  "Zod (schema validation only, shared FE/BE)"
+]
+```
+
+**Pairing tip:** simple forms → use the UI library's built-in validation; complex forms → React Hook Form + Zod (React) or VeeValidate + Zod (Vue).
 
 ---
 
@@ -408,7 +443,143 @@ Version compatibility evolves with the ecosystem; at selection time, consult the
 
 ---
 
-## 2.3 Custom Option Entry
+## 2.3 Framework Capability Coverage Matrix (eliminate redundant recommendations)
+
+> **Core goal:** after the user picks a framework, the AI Agent automatically detects the framework's built-in capabilities, marks subsequent layers as "covered" and skips them by default — avoiding redundant third-party library recommendations.
+
+### Frontend Framework Capability Coverage
+
+| Chosen framework | Covered layers | Coverage description | Default strategy |
+|------------------|---------------|---------------------|------------------|
+| **Element Plus** (Vue) | L9 Form validation | `el-form` + `el-form-item` built-in validation rules | Skip L9, mark "covered" |
+| **Ant Design** (React) | L9 Form validation | `Form` + `Form.Item` built-in validation rules | Skip L9, mark "covered" |
+| **Ant Design Vue** (Vue) | L9 Form validation | Consistent with Ant Design form validation | Skip L9, mark "covered" |
+| **Naive UI** (Vue) | L9 Form validation | `n-form` built-in validation | Skip L9, mark "covered" |
+| **MUI** (React) | L9 Form validation | `FormControl` + `TextField` validation | Skip L9, mark "covered" |
+| **Vue Router** | L8 Router | Official routing solution | Auto-lock, no further question |
+| **React Router** | L8 Router | React ecosystem standard router | Auto-lock, no further question |
+| **Next.js** | L3 Build + L8 Router | Built-in Turbopack build + App Router | Auto-lock L3 and L8 |
+| **SvelteKit** | L3 Build + L8 Router | Built-in Vite build + file-based routing | Auto-lock L3 and L8 |
+| **Nuxt** (Vue) | L3 Build + L8 Router | Built-in Vite build + file-based routing | Auto-lock L3 and L8 |
+
+### Backend Framework Capability Coverage
+
+| Chosen framework | Covered layers | Coverage description | Default strategy |
+|------------------|---------------|---------------------|------------------|
+| **NestJS** | L8 Auth | `@nestjs/passport` integrates Passport strategies | Recommend Passport plugin rather than standalone |
+| **Spring Boot** | L8 Auth | Spring Security ecosystem | Recommend Spring Security rather than standalone |
+| **Spring Boot** | L9 Logging | Logback built-in | Skip L9, mark "covered" |
+| **Spring Boot** | L12 Scheduling | `@Scheduled` built-in | Skip L12 for simple scenarios |
+| **NestJS** | L12 Scheduling | `@nestjs/schedule` built-in | Skip L12 for simple scenarios |
+| **Django** (Python) | L4 ORM | Django ORM built-in | Skip L4, mark "covered" |
+| **Django** (Python) | L8 Auth | Django Auth built-in | Skip L8, mark "covered" |
+| **FastAPI** (Python) | L9 Logging | Uvicorn logging integration | Skip L9 for simple scenarios |
+
+### Capability Coverage Decision Flow
+
+```
+User selects framework X
+    ↓
+AI Agent queries the capability coverage matrix
+    ↓
+Does framework X cover layer L?
+    ├── Yes → Mark L as "covered — use built-in"
+    │        └── Does the user need capabilities beyond the built-in?
+    │            ├── No → Skip L, do not recommend a third-party library
+    │            └── Yes → Recommend a standalone solution, labeled "choose when built-in is insufficient"
+    └── No → Show candidate options for L as normal
+```
+
+---
+
+## 2.4 Layered Linkage Rules (choosing A auto-recommends B)
+
+> **Core goal:** earlier choices automatically filter later options and link-recommend companion frameworks and plugins, presented as interactive multi-select checkboxes.
+
+### Frontend Linkage Rules
+
+| Chosen (earlier) | Auto-linked (later) | Linkage method |
+|------------------|---------------------|---------------|
+| Vue | L4 shows only Vue-ecosystem libraries | Filter candidates |
+| Vue | L7 recommends Pinia | Auto-fill default |
+| Vue | L8 locks Vue Router | Auto-lock |
+| Vue | L10 recommends Vitest | Auto-fill default |
+| React | L4 shows only React-ecosystem libraries | Filter candidates |
+| React | L7 recommends Zustand (small/mid) / Redux Toolkit (large) | Auto-fill default |
+| React | L8 recommends React Router | Auto-fill default |
+| Svelte | L4 shows only Svelte-ecosystem libraries | Filter candidates |
+| Svelte | L7 locks Svelte Stores | Auto-lock |
+| Svelte | L8 locks SvelteKit router | Auto-lock |
+| Vite (L3) | L10 recommends Vitest | Auto-fill default |
+| Next.js (L1+L3) | L8 locks App Router | Auto-lock |
+| TailwindCSS (L5) | L11 adds TailwindCSS class-sorting plugin | Recommend plugin |
+
+### Backend Linkage Rules
+
+| Chosen (earlier) | Auto-linked (later) | Linkage method |
+|------------------|---------------------|---------------|
+| Node.js | L4 shows only Node-ecosystem ORMs | Filter candidates |
+| Node.js | L9 recommends Pino | Auto-fill default |
+| NestJS | L8 recommends `@nestjs/passport` | Recommend plugin |
+| NestJS | L10 recommends Jest | Auto-fill default |
+| Java | L4 shows only Java-ecosystem ORMs | Filter candidates |
+| Spring Boot | L9 locks Logback | Auto-lock |
+| Spring Boot | L8 recommends Spring Security | Auto-fill default |
+| Go | L4 shows only Go-ecosystem ORMs | Filter candidates |
+| Go | L9 recommends Zap | Auto-fill default |
+| Gin | L8 recommends `golang-jwt/jwt` | Recommend plugin |
+| Prisma | L5 compatible with MySQL / PostgreSQL / MongoDB | Filter candidates |
+| MyBatis Plus | L5 compatible with MySQL / PostgreSQL | Filter candidates |
+
+### Companion Plugin Linkage (multi-select checkbox display)
+
+After the user picks a main framework, companion plugins are shown as **multi-select checkboxes** for the user to pick as needed:
+
+**Vue ecosystem companion plugins:**
+
+| Main framework | Companion plugin | Purpose | Default check |
+|----------------|-----------------|---------|---------------|
+| Vue + Pinia | `pinia-plugin-persistedstate` | State persistence | Recommended |
+| Vue + Vite | `unplugin-auto-import` | Auto API imports | Recommended |
+| Vue + Vite | `unplugin-vue-components` | Auto component imports | Recommended |
+| Vue + Vue Router | `unplugin-vue-router` | File-based routing | Optional |
+
+**React ecosystem companion plugins:**
+
+| Main framework | Companion plugin | Purpose | Default check |
+|----------------|-----------------|---------|---------------|
+| React + Zustand | `zustand/middleware` (persist) | State persistence | Recommended |
+| React + Redux Toolkit | `redux-persist` | State persistence | Recommended |
+| React + Next.js | `next-auth` | Authentication | As needed |
+
+**NestJS ecosystem companion plugins:**
+
+| Framework | Companion plugin | Purpose | Default check |
+|-----------|-----------------|---------|---------------|
+| NestJS | `@nestjs/swagger` | Swagger docs | Recommended |
+| NestJS | `@nestjs/throttler` | Rate limiting | Recommended |
+| NestJS | `@nestjs/passport` | Auth strategies | Required with auth |
+| NestJS | `@nestjs/schedule` | Scheduling | As needed |
+
+**Interactive checkbox example:**
+```
+ask_followup_question({
+  questions: [{
+    question: "Which companion plugins do you need?",
+    multiSelect: true,
+    options: [
+      "pinia-plugin-persistedstate (state persistence)",
+      "unplugin-auto-import (auto API imports)",
+      "unplugin-vue-components (auto component imports)",
+      "unplugin-vue-router (file-based routing)"
+    ]
+  }]
+})
+```
+
+---
+
+## 2.5 Custom Option Entry
 
 ### Custom Rules
 
@@ -600,35 +771,45 @@ Layer 10: Test framework →  Layer 11: Storage   →  Layer 12: Scheduling (opt
 
 ### Layer 8: Authentication (pick one)
 
-| Option | Traits | Best for |
-|--------|--------|----------|
-| JWT | Stateless, cross-domain friendly, mobile-friendly, broad ecosystem | Decoupled FE/BE, mobile (recommended) |
-| OAuth2 / OIDC | Third-party auth standard, SSO, social login | SSO, third-party login, enterprise auth |
-| Session + Cookie | Traditional, server-controlled, forced logout possible | Traditional web apps, SSR |
+> **Capability coverage note:** The following backend frameworks have built-in auth integration — prefer the framework's built-in solution:
+> - **NestJS** — `@nestjs/passport` integrates Passport strategies; recommend using it rather than a standalone solution
+> - **Spring Boot** — Spring Security ecosystem; recommend using it rather than a standalone solution
+> - **Django** — Django Auth built-in auth system; skip this layer for simple scenarios
+
+| Option | Traits | Best for | Coverage status |
+|--------|--------|----------|----------------|
+| JWT | Stateless, cross-domain friendly, mobile-friendly, broad ecosystem | Decoupled FE/BE, mobile (recommended) | NestJS uses `@nestjs/passport` + JWT strategy |
+| OAuth2 / OIDC | Third-party auth standard, SSO, social login | SSO, third-party login, enterprise auth | Spring Security OAuth2 |
+| Session + Cookie | Traditional, server-controlled, forced logout possible | Traditional web apps, SSR | Django Auth built-in |
 
 **Exclusivity:** one primary auth scheme.
 
-**Tip:** JWT for decoupled FE/BE; OAuth2/OIDC for SSO or social login; Session for traditional SSR.
+**Tip:** JWT for decoupled FE/BE; OAuth2/OIDC for SSO or social login; Session for traditional SSR. NestJS projects: recommend `@nestjs/passport` + JWT strategy.
 
 ---
 
 ### Layer 9: Logging (recommend per main language)
 
+> **Capability coverage note:** The following frameworks have built-in logging — this layer may be skipped for simple scenarios:
+> - **Spring Boot** — Logback built-in, covered by default
+> - **NestJS** — built-in Logger, skippable for simple scenarios
+> - **FastAPI** — Uvicorn logging integration, skippable for simple scenarios
+
 #### Java Ecosystem
 
-| Option | Traits | Best for |
-|--------|--------|----------|
-| Logback | Spring Boot default, performant, flexible config | Spring Boot projects (default) |
-| Log4j2 | Async logging, best performance | High-performance logging needs |
-| SLF4J + chosen impl | Interface standard, swappable implementation | Need to switch logging impls |
+| Option | Traits | Best for | Coverage status |
+|--------|--------|----------|----------------|
+| Logback | Spring Boot default, performant, flexible config | Spring Boot projects (default) | Built into Spring Boot |
+| Log4j2 | Async logging, best performance | High-performance logging needs | Choose when built-in is insufficient |
+| SLF4J + chosen impl | Interface standard, swappable implementation | Need to switch logging impls | Choose when built-in is insufficient |
 
 #### Node.js Ecosystem
 
-| Option | Traits | Best for |
-|--------|--------|----------|
-| Pino | Fastest, JSON logs, transport streams | High-performance services (recommended) |
-| Winston | Most popular, multi-transport, flexible | General projects |
-| Framework built-in logger | Zero deps, framework integration | Small projects |
+| Option | Traits | Best for | Coverage status |
+|--------|--------|----------|----------------|
+| Pino | Fastest, JSON logs, transport streams | High-performance services (recommended) | Standalone solution |
+| Winston | Most popular, multi-transport, flexible | General projects | Standalone solution |
+| Framework built-in logger | Zero deps, framework integration | Small projects | Built into NestJS, skippable for simple scenarios |
 
 #### Go Ecosystem
 
@@ -690,13 +871,17 @@ Layer 10: Test framework →  Layer 11: Storage   →  Layer 12: Scheduling (opt
 
 ### Layer 12: Scheduling (optional, skippable)
 
+> **Capability coverage note:** The following frameworks have built-in scheduling — this layer may be skipped for simple scenarios:
+> - **Spring Boot** — `@Scheduled` built-in, covers simple scheduled tasks
+> - **NestJS** — `@nestjs/schedule` built-in, covers simple scheduled tasks
+
 #### Java Ecosystem
 
-| Option | Traits | Best for |
-|--------|--------|----------|
-| Spring @Scheduled | Built into Spring Boot, zero deps, annotation-based | Single-node scheduled jobs (simple scenarios) |
-| XXL-Job | Distributed scheduling, visual UI, dynamic config | Distributed scheduled jobs (China-based teams) |
-| Quartz | Full-featured, cluster support, persistence | Complex scheduling needs |
+| Option | Traits | Best for | Coverage status |
+|--------|--------|----------|----------------|
+| Spring @Scheduled | Built into Spring Boot, zero deps, annotation-based | Single-node scheduled jobs (simple scenarios) | Built into Spring Boot |
+| XXL-Job | Distributed scheduling, visual UI, dynamic config | Distributed scheduled jobs (China-based teams) | Choose when built-in is insufficient |
+| Quartz | Full-featured, cluster support, persistence | Complex scheduling needs | Choose when built-in is insufficient |
 
 #### Node.js Ecosystem
 
