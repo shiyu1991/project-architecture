@@ -135,6 +135,46 @@ type: feat | fix | refactor | docs | test | chore | perf | style
 - **异常流程** — 错误处理、无效输入
 - **边界情况** — 边缘条件、极限值
 
+### 测试目录结构
+
+```
+tests/
+├── unit/               # 单元测试（与源码目录结构对应）
+│   ├── core/
+│   │   ├── auth/
+│   │   └── http/
+│   └── modules/
+│       └── order/
+├── integration/        # 集成测试（模块交互、API 端点）
+│   └── order-api.test.ts
+└── e2e/                # 端到端测试（核心业务流程）
+    └── order-flow.test.ts
+```
+
+**规则：**
+- 单元测试文件与源码同目录或 `__tests__` 子目录，按项目约定统一
+- 集成测试放 `tests/integration/`，命名 `<模块>-api.test.ts`
+- E2E 测试放 `tests/e2e/`，命名 `<流程名>-flow.test.ts`
+
+### Mock 策略
+
+| 场景 | Mock 策略 |
+|------|-----------|
+| 单元测试 | Mock 外部依赖（数据库、HTTP、文件系统） |
+| 集成测试 | 使用真实数据库（测试库）或内存数据库，Mock 外部 API |
+| E2E 测试 | 不 Mock，使用完整的测试环境 |
+
+**规则：**
+- Mock 在测试边界创建，不侵入业务代码
+- 业务代码不硬编码 Mock 逻辑，通过依赖注入实现可测试性
+- 外部 API Mock 使用录播（如 Pact / MSW），保持真实响应结构
+
+### 测试数据管理
+
+- **测试数据工厂** — 用工厂函数或 Builder 模式生成测试数据，禁止在测试中硬编码
+- **测试数据库** — 每次测试运行前重置，用迁移脚本初始化
+- **Fixture** — 共享测试数据放 `tests/fixtures/`，按模块组织
+
 ---
 
 ## 5. 安全规范

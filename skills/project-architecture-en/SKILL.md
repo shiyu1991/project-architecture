@@ -42,7 +42,7 @@ On first contact, the AI Agent MUST identify the user type with one question and
 |------|---------|-------------------|
 | 🌱 Guided | Non-technical beginner | Plain language throughout. At each layer, offer "recommended option + one-sentence human explanation". The user can complete the entire selection by simply answering "use the recommendation". No jargon unless asked. |
 | 📋 Product | Product manager / business side | Focus on business requirement modeling (users, flows, data, boundaries) and produce a domain-model sketch. For tech selection, present only the final list with a short rationale — do not interrupt layer by layer. |
-| ⚡ Expert | Developer / tech lead | Confirm only the key decision points, auto-fill defaults, and quickly output the complete tech-stack list. |
+| ⚡ Expert | Developer / tech lead | Confirm only the key decision points layer by layer; recommended items are labeled "recommended" for quick confirmation, but each layer still requires user checkbox selection. Quickly outputs the complete tech-stack list. |
 
 Detection signals:
 
@@ -64,6 +64,24 @@ Detection signals:
 | L: real product / team collaboration | multiple modules, multiple contributors, long-term maintenance, deployment & ops | Full architecture: Core + DDD modules + ADR + 6-phase lifecycle |
 
 **Default assumption is Tier M.** Upgrade to L only on clear signals (team collaboration, long-term maintenance, enterprise-grade, multiple developers). Never default to the full architecture.
+
+---
+
+# 3-A. Project Type Classification (selection branch)
+
+After scale classification, determine the project type to decide the selection flow:
+
+| Type | Detection signals | Selection flow |
+|------|-------------------|----------------|
+| Full-stack Web | Both frontend and backend needed | Full flow: Phase 1 (core) → Phase 2 (all frontend layers) → Phase 3 (all backend layers) → Phase 4 (cross-cutting) |
+| Frontend-only | No backend / BFF only / static site / SPA | Phase 1 (frontend items + deployment) → Phase 2 (all frontend layers) → Phase 4 (cross-cutting) |
+| Backend-only API | No frontend / API service only | Phase 1 (backend items + database + deployment) → Phase 3 (all backend layers) → Phase 4 (cross-cutting) |
+| Mini-program / Mobile | WeChat mini-program / UniApp / Flutter / React Native | Mobile selection flow (see `references/tech-stack-guide.md` Mobile section) |
+| AI / ML Application | AI inference / training / data analysis | Phase 1 (Python preferred) → Phase 3 (all backend layers, AI frameworks in tech-stack-guide) → Phase 4 |
+
+**Timing:** After user-mode detection and scale classification, before tech selection. After classification, clearly inform the user of the project type and selection flow branch.
+
+**Frontend-only / Backend-only skip rule:** Skipped sides do not require layer-by-layer checkbox selection. The AI Agent simply marks "not needed for this project" in the selection summary.
 
 ---
 
@@ -124,7 +142,7 @@ AI: "Use Vue + SpringBoot + MySQL"   ← WRONG: business analysis was skipped
 
 Correct flow: analyze the business first (users, products, orders, payments, inventory, marketing), then design the tech (frontend framework, backend framework, database, cache, messaging, auth, deployment).
 
-In Product mode, this phase outputs a **domain-model sketch + core user flows**, which must be confirmed by the user before tech selection begins.
+In Product mode, this phase outputs a **domain-model sketch + core user flows** (generated using `templates/domain-model-template.md`), which must be confirmed by the user before tech selection begins.
 
 ---
 
@@ -305,6 +323,70 @@ Global decision items, mixing allowed in the same batch:
 
 **After all frontend and backend selection is complete**, guide the user through CI/CD and error monitoring/APM choices.
 
+## 7.5-A Selection Progress Tracking (mandatory)
+
+During selection, the AI Agent MUST output a progress summary after each batch, so the user can see selected/pending/skipped status at any time:
+
+```
+## Selection Progress [3/12 frontend layers completed]
+✅ Frontend-Main Framework: Vue
+✅ Frontend-Language: TypeScript
+✅ Frontend-Build Tool: Vite
+⬜ Frontend-UI Library: pending
+⬜ Frontend-CSS Approach: pending
+⬜ Frontend-HTTP Client: pending
+... (remaining layers)
+```
+
+**Rules:**
+- Output progress summary immediately after each batch
+- Selected layers: ✅ with the result
+- Pending layers: ⬜
+- Skipped layers (e.g., frontend skipped in a backend-only project): ⏭️ with "not needed"
+- After all layers are selected, proceed to selection summary
+
+## 7.5-B Selection Result Summary (mandatory)
+
+After all selection layers are complete, the AI Agent **MUST** output a tech-stack summary table and auto-fill it into `.agent/architecture.md`:
+
+```
+## Tech Stack Selection Summary
+
+| Layer | Choice | Version | Reason |
+|-------|--------|---------|--------|
+| Frontend-Main Framework | Vue | 3.x (live query) | ... |
+| Frontend-Language | TypeScript | - | ... |
+| Frontend-Build Tool | Vite | x.x (live query) | ... |
+| Backend-Framework | NestJS | x.x (live query) | ... |
+| Backend-Database | PostgreSQL | x.x (live query) | ... |
+| ... | ... | ... | ... |
+
+Versions must be queried live (per references/tech-stack-guide.md protocol 0.1). Stale versions are forbidden.
+```
+
+**Follow-up actions:**
+1. User confirms the summary table
+2. Auto-fill `.agent/architecture.md` tech stack
+3. Generate ADR-001 recording the tech-stack decision
+4. Enter project initialization (generate directory structure, `.agent/` four-file set, README)
+
+## 7.5-C Selection Change Flow
+
+Users may change a previously selected option during or after selection:
+
+1. **User requests a change** (e.g., "switch frontend framework from Vue to React")
+2. **AI Agent assesses impact scope:**
+   - Affected downstream layers (UI library, state management, router, etc.)
+   - Compatibility check with the new framework
+   - List of already-selected layers that are no longer compatible
+3. **AI Agent presents impact and requests confirmation:**
+   - Lists layers that need re-selection
+   - Lists selections that will be invalidated
+4. **After user confirmation:**
+   - Update the selected option
+   - Re-run selection for affected layers
+   - Update progress tracking and result summary
+
 ## 7.6 Interaction Rules per Mode
 
 - **Guided**: 3-4 checkbox questions per batch, each item labeled "recommended" with a one-sentence explanation; user checks to confirm
@@ -338,9 +420,11 @@ project
 Key rules (details in `references/architecture-design.md`):
 
 - **Core**: stable, generic, low-churn, highly reused; MUST NOT contain business code; frontend Core and backend Core have different structures
-- **Business modules**: DDD four layers — `domain / application / infrastructure / interfaces`
+- **Business modules**: backend uses DDD four layers — `domain / application / infrastructure / interfaces`; frontend uses feature-oriented structure — `api / components / composables / stores / views` (see architecture-design.md section 6)
+- **Module communication**: backend same-process direct calls to Application Service, cross-module event-driven; frontend Props/Events + Core Store sharing (see architecture-design.md section 7)
 - **Reuse rule**: before adding a feature, check in order: Core → existing modules → Plugins. Never reinvent the wheel.
 - **ADR**: record every significant technical decision in `docs/adr/`; format in `references/architecture-design.md` section 5
+- **Monorepo**: when FE+BE share a repo, use `packages/shared + client + server` structure with pnpm workspaces + Turborepo (see architecture-design.md section 11)
 
 ---
 
@@ -377,6 +461,7 @@ Git workflow (branching strategy, commit conventions): `references/dev-lifecycle
 | `references/architecture-design.md` | Designing architecture or planning module structure |
 | `references/dev-lifecycle.md` | Writing code, creating tests, or establishing dev standards |
 | `templates/` | Initializing `.agent/`, ADRs, and README for a new project |
+| `templates/domain-model-template.md` | Product mode requirement analysis phase, outputting domain-model sketch |
 
 ---
 

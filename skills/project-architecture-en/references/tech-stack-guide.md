@@ -355,15 +355,83 @@ header: "Frontend-Form Validation"
 
 ### Mobile Technologies
 
-Mobile selection is independent of the frontend web flow:
+Mobile selection is independent of the frontend web flow. When the project type is classified as "Mini-program / Mobile," use the following layer-by-layer selection flow:
 
-| Option | Best for |
-|--------|----------|
-| Flutter | Cross-platform, high-performance UI |
-| React Native | JS/TS teams, cross-platform |
-| UniApp | Mini-programs + mobile, China market |
-| Android Native | Android-first, maximum platform integration |
-| iOS Native | iOS-first, maximum platform integration |
+#### Mobile Layer 1: Cross-Platform Framework (pick one)
+
+| Option | Traits | Best for |
+|--------|--------|----------|
+| UniApp | Vue syntax, covers mini-programs + apps + H5, China ecosystem | China mini-programs, multi-platform publishing (default) |
+| Flutter | Cross-platform, high-performance UI, Dart language | High-performance cross-platform apps |
+| React Native | JS/TS teams, cross-platform, React ecosystem | JS/TS teams, cross-platform apps |
+| Android Native | Android-first, maximum platform integration | Android-first |
+| iOS Native | iOS-first, maximum platform integration | iOS-first |
+
+#### Mobile Layer 2: Language (recommend per framework)
+
+| Framework | Language | Notes |
+|-----------|----------|-------|
+| UniApp | Vue (JavaScript/TypeScript) | Same as web Vue |
+| Flutter | Dart | Flutter-specific language |
+| React Native | JavaScript/TypeScript | Same as web React |
+| Android Native | Kotlin / Java | Kotlin is Google's recommendation |
+| iOS Native | Swift / Objective-C | Swift is Apple's recommendation |
+
+#### Mobile Layer 3: UI Component Library (recommend per framework)
+
+| Framework | UI Library | Notes |
+|-----------|-----------|-------|
+| UniApp | uView / uni-ui / Vant Weapp | uView full components, uni-ui official, Vant for WeChat mini-programs |
+| Flutter | Material / Cupertino | Built into Flutter |
+| React Native | React Native Paper / NativeBase | Material Design / cross-platform components |
+| Android Native | Material Components | Google official |
+| iOS Native | SwiftUI / UIKit | SwiftUI recommended by Apple |
+
+#### Mobile Layer 4: State Management (recommend per framework)
+
+| Framework | State Management | Notes |
+|-----------|-----------------|-------|
+| UniApp | Pinia / Vuex | Same as web Vue |
+| Flutter | Riverpod / Bloc / Provider | Riverpod is the modern recommendation |
+| React Native | Zustand / Redux Toolkit | Same as web React |
+| Android Native | ViewModel + LiveData / Compose State | Jetpack components |
+| iOS Native | SwiftUI @State / Combine | Built into SwiftUI |
+
+#### Mobile Layer 5: HTTP Client (pick one)
+
+| Option | Traits | Best for |
+|--------|--------|----------|
+| Framework built-in request | UniApp uni.request / Flutter http / RN fetch | Default, zero extra deps |
+| Axios | Interceptors, large community | JS/TS projects (UniApp/RN) |
+| Dio | Most popular Flutter HTTP client | Flutter projects |
+
+#### Mobile Layer 6: Local Storage (pick one)
+
+| Option | Traits | Best for |
+|--------|--------|----------|
+| Framework built-in storage | UniApp uni.setStorage / Flutter shared_preferences / RN AsyncStorage | Default |
+| Local database | SQLite / Realm / WatermelonDB | Offline data, large local data |
+| MMKV | High-performance KV storage | High-performance KV needs |
+
+#### Mobile Layer 7: Test Framework (recommend per framework)
+
+| Framework | Test Framework | Notes |
+|-----------|---------------|-------|
+| UniApp | Vitest / Jest | Same as web Vue |
+| Flutter | Flutter test (built-in) | Official built-in |
+| React Native | Jest / Detox | Jest for unit, Detox for E2E |
+| Android Native | JUnit / Espresso | Google recommended |
+| iOS Native | XCTest | Apple official |
+
+#### Mobile Compatibility Matrix (structural bindings)
+
+| | UniApp | Flutter | React Native | Android Native | iOS Native |
+|---|---|---|---|---|---|
+| **Vue** | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Dart** | ❌ | ✅ | ❌ | ❌ | ❌ |
+| **JS/TS** | ✅ | ❌ | ✅ | ❌ | ❌ |
+| **Kotlin** | ❌ | ❌ | ❌ | ✅ | ❌ |
+| **Swift** | ❌ | ❌ | ❌ | ❌ | ✅ |
 
 ---
 
@@ -470,11 +538,11 @@ Version compatibility evolves with the ecosystem; at selection time, consult the
 | **Ant Design Vue** (Vue) | L9 Form validation | Consistent with Ant Design form validation | Skip L9, mark "covered" |
 | **Naive UI** (Vue) | L9 Form validation | `n-form` built-in validation | Skip L9, mark "covered" |
 | **MUI** (React) | L9 Form validation | `FormControl` + `TextField` validation | Skip L9, mark "covered" |
-| **Vue Router** | L8 Router | Official routing solution | Recommend, but require user confirmation |
-| **React Router** | L8 Router | React ecosystem standard router | Recommend, but require user confirmation |
-| **Next.js** | L3 Build + L8 Router | Built-in Turbopack build + App Router | Recommend built-in, but require user confirmation |
-| **SvelteKit** | L3 Build + L8 Router | Built-in Vite build + file-based routing | Recommend built-in, but require user confirmation |
-| **Nuxt** (Vue) | L3 Build + L8 Router | Built-in Vite build + file-based routing | Recommend built-in, but require user confirmation |
+| **Vue Router** | L8 Router | Official routing solution | Recommend "use built-in," label "covered," still require user confirmation |
+| **React Router** | L8 Router | React ecosystem standard router | Recommend "use built-in," label "covered," still require user confirmation |
+| **Next.js** | L3 Build + L8 Router | Built-in Turbopack build + App Router | Recommend "use built-in," label "covered," still require user confirmation |
+| **SvelteKit** | L3 Build + L8 Router | Built-in Vite build + file-based routing | Recommend "use built-in," label "covered," still require user confirmation |
+| **Nuxt** (Vue) | L3 Build + L8 Router | Built-in Vite build + file-based routing | Recommend "use built-in," label "covered," still require user confirmation |
 
 ### Backend Framework Capability Coverage
 
@@ -653,12 +721,13 @@ Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 
 | Java | Enterprise favorite, most mature ecosystem, powerful Spring ecosystem, deep talent pool | Enterprise systems, large projects |
 | Node.js (TypeScript) | One language full-stack, high productivity, FE/BE unity | Rapid development, full-stack teams, small-to-mid projects |
 | Go | Compiled performance, native concurrency, simple deployment | High-performance services, microservices, cloud-native |
+| Python | AI/ML friendly, rapid development, rich ecosystem | AI backends, data analysis, rapid prototyping, content management |
 
-**Signals:** large enterprise systems / traditional enterprises in China → Java; isomorphic FE/BE / rapid iteration → Node.js; high concurrency / cloud-native / infra tooling → Go.
+**Signals:** large enterprise systems / traditional enterprises in China → Java; isomorphic FE/BE / rapid iteration → Node.js; high concurrency / cloud-native / infra tooling → Go; AI/ML / data analysis / rapid prototyping → Python.
 
 **Exclusivity:** exactly one main language; locked once chosen. Always pick the current LTS (verify per protocol 0.1).
 
-**Custom input:** other languages allowed (Python, Rust, C#); the AI only raises compatibility warnings. Python framework candidates appear at Layer 2.
+**Custom input:** other languages allowed (Rust, C#); the AI only raises compatibility warnings.
 
 ---
 
@@ -688,7 +757,7 @@ Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 
 | Fiber | Express-style API, extremely fast router | High-performance API services |
 | Echo | Clean, fast, rich middleware | Mid-size projects |
 
-#### Python Ecosystem (when user customizes the main language)
+#### Python Ecosystem
 
 | Option | Traits | Best for |
 |--------|--------|----------|
@@ -740,7 +809,15 @@ Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 
 | sqlx | Lightweight, raw SQL, struct scanning | Raw SQL preference |
 | ent | Schema-first, code generation | Complex relational data |
 
-**Signals:** China-based Java teams → MyBatis Plus; international Java teams → JPA; Node projects → Prisma first.
+#### Python Ecosystem
+
+| Option | Traits | Best for | Coverage status |
+|--------|--------|----------|----------------|
+| SQLAlchemy | Python ecosystem standard ORM, powerful, multiple patterns | General Python projects (default) | Standalone |
+| Django ORM | Built into Django, deep integration with Admin | Django projects | Built into Django, mark "covered" |
+| Tortoise ORM | Async ORM, Django-style API | FastAPI / async projects | Standalone |
+
+**Signals:** China-based Java teams → MyBatis Plus; international Java teams → JPA; Node projects → Prisma first; Django projects → use built-in Django ORM; FastAPI projects → SQLAlchemy or Tortoise ORM.
 
 **Exclusivity:** exactly one ORM/data-access solution.
 
@@ -836,6 +913,14 @@ Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 
 | Logrus | Structured logs, friendly API | General Go projects |
 | slog (stdlib) | Official, zero deps, structured | Newer Go projects |
 
+#### Python Ecosystem
+
+| Option | Traits | Best for | Coverage status |
+|--------|--------|----------|----------------|
+| Loguru | Out-of-the-box, structured, file rotation, exception tracing | General Python projects (recommended) | Standalone |
+| structlog | Structured logs, JSON output | Structured logging needs | Standalone |
+| Framework built-in logging | Django logging / Uvicorn logging | Small projects | Built into Django/FastAPI, skippable for simple scenarios |
+
 **Exclusivity:** exactly one logging system.
 
 ---
@@ -865,6 +950,14 @@ Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 
 | Go testing (stdlib) | Official, zero deps, benchmarks | All Go projects (default) |
 | testify | Assertions, mocks, suites | Stdlib enhancement |
 | Ginkgo | BDD-style test framework | BDD-style preference |
+
+#### Python Ecosystem
+
+| Option | Traits | Best for |
+|--------|--------|----------|
+| Pytest | Most popular, rich plugins, fixture mechanism, parameterized tests | Python projects (default) |
+| Unittest | Stdlib built-in, zero deps | Simple projects, stdlib preference |
+| Robot Framework | Keyword-driven, BDD style | BDD-style preference |
 
 **Exclusivity:** exactly one test framework.
 
@@ -916,6 +1009,14 @@ Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 
 | gocron | Chained API, easy to use | Chained-API preference |
 | Stdlib time.Ticker | Zero deps, simplest | Fixed-interval tasks |
 
+#### Python Ecosystem
+
+| Option | Traits | Best for | Coverage status |
+|--------|--------|----------|----------------|
+| Celery | Distributed task queue, scheduled jobs, retries | Distributed scheduled jobs (recommended) | Standalone |
+| APScheduler | Lightweight scheduled jobs, cron expressions | Single-node scheduled jobs | Standalone |
+| Django cron | Django built-in scheduled jobs | Django projects, simple scenarios | Optional built-in for Django |
+
 **Exclusivity:** exactly one scheduling solution.
 
 **Skip condition:** projects without scheduled jobs may choose "not needed".
@@ -964,6 +1065,18 @@ After the user picks a backend framework and ORM, the AI Agent automatically rec
 | Gin + file storage | Go SDK for S3 / MinIO | Object storage integration | Required with file storage |
 | Gin + scheduling | `robfig/cron` | Job scheduling | Required with scheduling |
 
+### Python Ecosystem
+
+| Framework + ORM | Plugin | Purpose | Required? |
+|-----------------|--------|---------|-----------|
+| FastAPI | `uvicorn[standard]` | ASGI server | Required |
+| FastAPI | `python-multipart` | File upload support | Required for file uploads |
+| FastAPI + SQLAlchemy | `alembic` | Database migrations | Recommended |
+| Django | `django-rest-framework` | REST API development | Recommended for API projects |
+| Django | `django-cors-headers` | CORS support | Required for FE/BE separation |
+| FastAPI / Django + file storage | `boto3` (S3) / `minio` SDK | Object storage integration | Required with file storage |
+| Python + scheduling | `celery[redis]` | Celery + Redis backend | Required with scheduling |
+
 ### Universal Recommendations (language-agnostic)
 
 | Plugin/Tool | Purpose | Required? |
@@ -981,22 +1094,24 @@ Only **long-term stable ecosystem bindings** are marked here; verify version-lev
 
 ### Main Language × Backend Framework
 
-| | Spring Boot | Quarkus | NestJS | Express | Gin | Fiber | FastAPI | Django |
-|---|---|---|---|---|---|---|---|---|
-| **Java** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Node.js** | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Go** | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ |
-| **Python** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| | Spring Boot | Quarkus | NestJS | Express | Gin | Fiber | FastAPI | Django | Flask |
+|---|---|---|---|---|---|---|---|---|---|
+| **Java** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Node.js** | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Go** | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Python** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
 
 ### Backend Framework × ORM
 
-| | MyBatis Plus | JPA | Prisma | TypeORM | Gorm | sqlx | SQLAlchemy |
-|---|---|---|---|---|---|---|---|
-| **Spring Boot** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **NestJS** | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Express** | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Gin** | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ |
-| **FastAPI** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| | MyBatis Plus | JPA | Prisma | TypeORM | Gorm | sqlx | SQLAlchemy | Django ORM | Tortoise ORM |
+|---|---|---|---|---|---|---|---|---|---|
+| **Spring Boot** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **NestJS** | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Express** | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Gin** | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **FastAPI** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
+| **Django** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ |
+| **Flask** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
 
 ### ORM × Database
 
@@ -1009,6 +1124,8 @@ Only **long-term stable ecosystem bindings** are marked here; verify version-lev
 | **Gorm** | ✅ | ✅ | ✅ |
 | **sqlx** | ✅ | ✅ | ❌ |
 | **SQLAlchemy** | ✅ | ✅ | ✅ |
+| **Django ORM** | ✅ | ✅ | ❌ |
+| **Tortoise ORM** | ✅ | ✅ | ✅ |
 
 ### Main Language × Test Framework
 
@@ -1021,11 +1138,12 @@ Only **long-term stable ecosystem bindings** are marked here; verify version-lev
 
 ### Main Language × Scheduling
 
-| | @Scheduled / @nestjs/schedule | XXL-Job | Quartz | Bull family | robfig/cron |
-|---|---|---|---|---|---|
-| **Java** | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **Node.js** | ✅ (NestJS) | ❌ | ❌ | ✅ | ❌ |
-| **Go** | ❌ | ❌ | ❌ | ❌ | ✅ |
+| | @Scheduled / @nestjs/schedule | XXL-Job | Quartz | Bull family | robfig/cron | Celery | APScheduler |
+|---|---|---|---|---|---|---|---|
+| **Java** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Node.js** | ✅ (NestJS) | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| **Go** | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| **Python** | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
 
 **Legend:** ✅ compatible | ❌ incompatible (structural) | ⚠️ extra config needed (verify live)
 
@@ -1126,9 +1244,37 @@ These choices are not frontend/backend-specific — they are project-wide archit
 
 ## 6. Reverse Analysis of Existing Projects
 
-When the user provides a GitHub URL, Git repo, or project archive, the AI Agent MUST:
+When the user provides a GitHub URL, Git repo, or project archive, the AI Agent MUST follow this flow.
 
-### Analyze
+### 6.1 Analysis Steps (mandatory, in order)
+
+**Step 1: Read project metadata**
+- Read `README.md`, `.agent/` directory (if exists), `package.json` / `pom.xml` / `go.mod` / `requirements.txt`
+- Identify project positioning, business goals, tech stack, scale tier
+
+**Step 2: Analyze directory structure**
+- List first- and second-level directory tree
+- Identify architecture pattern (Core + DDD / layered / MVC / unstructured)
+- Check for `core/` / `modules/` / `tests/` / `docs/adr/` etc.
+- Determine if it matches the scale-tier strategy from SKILL.md
+
+**Step 3: Analyze tech stack**
+- Extract tech stack and versions from dependency files
+- Check against compatibility matrix in `references/tech-stack-guide.md` for incompatible combos
+- Check if versions are stale (compare with latest per protocol 0.1)
+
+**Step 4: Analyze code quality**
+- Check for ESLint / Prettier / Biome etc. configuration
+- Check for test directory and coverage configuration
+- Check for `.env` management and env-var conventions
+- Scan for hardcoded sensitive information (quick scan)
+
+**Step 5: Analyze shared capability reuse**
+- Check for `core/` layer and shared capability wrappers
+- Check if business modules call low-level libs directly (axios / fetch) instead of going through Core
+- Identify modules reinventing the wheel
+
+### 6.2 Analysis Content
 
 - Project structure
 - Tech stack
@@ -1137,11 +1283,55 @@ When the user provides a GitHub URL, Git repo, or project archive, the AI Agent 
 - Architecture patterns
 - Shared components
 - Code quality
+- Test coverage
+- Security practices
 
-### Output
+### 6.3 Output Format (mandatory)
 
-- Current project technical profile
-- Recommended optimizations
-- Reusable modules
-- Modules needing refactor
-- Future architecture suggestions
+```
+## Project Reverse Analysis Report
+
+### 1. Project Overview
+- Project name:
+- Project positioning:
+- Scale tier: S / M / L (with justification)
+- Current stage: Prototype / MVP / Growth / Stable maintenance
+
+### 2. Tech Stack Profile
+| Layer | Choice | Version | Latest | Status |
+|-------|--------|---------|--------|--------|
+|  |  |  |  | ✅ Current / ⚠️ Stale / ❌ Incompatible |
+
+### 3. Architecture Assessment
+- Architecture pattern:
+- Matches scale-tier strategy:
+- Directory convention: ✅ Good / ⚠️ Partial / ❌ Chaotic
+- Core layer completeness:
+- Module modularity:
+
+### 4. Code Quality Assessment
+- Code quality tools:
+- Test coverage:
+- Security practices:
+- Documentation completeness:
+
+### 5. Issue List
+| # | Issue | Severity | Suggested fix |
+|---|-------|----------|---------------|
+| 1 |  | High/Med/Low |  |
+
+### 6. Reusable Modules
+| Module | Capability | Reuse value |
+|--------|-----------|-------------|
+|  |  |  |
+
+### 7. Modules Needing Refactor
+| Module | Problem | Priority |
+|--------|---------|----------|
+|  |  |  |
+
+### 8. Optimization Recommendations (by priority)
+1. **P0 (must fix)** —
+2. **P1 (should fix)** —
+3. **P2 (nice to have)** —
+```

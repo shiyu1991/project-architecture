@@ -180,3 +180,158 @@ docs
 4. **最终选择** — 选择了什么及原因
 5. **影响范围** — 受影响的模块
 6. **未来变化** — 可能导致反转的条件
+
+---
+
+## 6. 前端业务模块结构
+
+前端业务模块与后端 DDD 结构不同，采用功能导向组织：
+
+```
+modules
+└── order
+    ├── api              # 模块 API 调用（调用 core/http）
+    ├── components/      # 模块专属组件
+    │   ├── OrderList.vue
+    │   ├── OrderDetail.vue
+    │   └── OrderForm.vue
+    ├── composables/     # 组合式逻辑（Vue）/ hooks（React）
+    │   ├── useOrder.ts
+    │   └── useOrderStatus.ts
+    ├── stores/          # 模块状态（Pinia / Zustand）
+    │   └── orderStore.ts
+    ├── types/           # 模块类型定义
+    │   └── order.d.ts
+    ├── views/           # 页面级组件
+    │   ├── OrderListView.vue
+    │   └── OrderDetailView.vue
+    ├── routes.ts        # 模块路由定义
+    └── index.ts         # 模块公共导出
+```
+
+**规则：**
+- 模块内组件不直接引用其他模块组件，跨模块通信走 Core 或事件机制
+- 模块 API 调用必须通过 `core/http`，禁止直接 import axios/fetch
+- 模块状态独立管理，全局共享状态放 Core
+
+---
+
+## 7. 模块通信模式
+
+### 7.1 后端模块间通信
+
+| 模式 | 适用场景 | 示例 |
+|------|----------|------|
+| 直接调用（同进程） | 同一服务内模块间 | Order 模块调用 Inventory 模块的 Application Service |
+| 事件驱动（异步） | 解耦、跨模块通知 | Order 创建后发事件，Inventory 消费扣减库存 |
+| API 调用（跨服务） | 微服务架构 | Order 服务调用 Payment 服务的 REST API |
+| 消息队列（跨服务异步） | 微服务异步通信 | Order 服务发消息到 MQ，Shipping 服务消费 |
+
+**规则：**
+- 同进程模块间直接调用，走 Application Service 层，不走 interfaces 层
+- 跨模块直接调用必须通过依赖注入，禁止硬编码依赖
+- 事件驱动必须定义清晰的事件 Schema（推荐用 ADR 记录）
+
+### 7.2 前端模块间通信
+
+| 模式 | 适用场景 | 示例 |
+|------|----------|------|
+| Props / Events | 父子组件通信 | OrderList 向父组件 emit 选中事件 |
+| 全局状态（Core Store） | 跨模块共享状态 | 用户信息、权限在 Core/auth store |
+| 事件总线（轻量级） | 无状态依赖的跨组件通知 | 显示全局 Toast、刷新数据列表 |
+| 路由参数 | 页面间数据传递 | 订单列表跳详情页传 orderId |
+
+**规则：**
+- 跨模块共享状态放 Core Store（如用户信息、权限、全局配置）
+- 模块私有状态放模块内 Store
+- 禁止模块间直接 import 组件，需要复用则提升到 Core/ui
+
+---
+
+## 8. 数据库迁移策略
+
+### 8.1 迁移工具选择
+
+| 技术栈 | 迁移工具 | 说明 |
+|--------|----------|------|
+| Node.js + Prisma | Prisma Migrate | 内置，Schema 优先 |
+| Node.js + TypeORM | TypeORM Migrations | 内置 |
+| Java + MyBatis Plus / JPA | Flyway / Liquibase | Flyway 简单、Liquibase 功能强 |
+| Go + Gorm | golang-migrate / Gorm AutoMigrate | golang-migrate 更规范 |
+| Python + SQLAlchemy | Alembic | SQLAlchemy 官方推荐 |
+| Python + Django | Django Migrations | 内置 |
+
+### 8.2 迁移规范
+
+- **每次 Schema 变更必须生成迁移脚本**，禁止手动改数据库
+- **迁移脚本一旦提交不可修改**，需要回滚则新建反向迁移
+- **破坏性变更（删列、改类型）必须分两步**：先标记废弃 → 下个版本删除
+- **迁移脚本必须可回滚**（除非数据丢失不可避免，需在 ADR 中说明）
+- **生产环境迁移前必须在测试环境验证**
+
+---
+
+## 9. API 版本策略
+
+| 策略 | 适用场景 | 示例 |
+|------|----------|------|
+| URL 版本 | RESTful API 通用 | `/api/v1/orders`、`/api/v2/orders` |
+| Header 版本 | 对 URL 洁净度有要求 | `Accept: application/vnd.api+json;version=1` |
+| 不版本化 | 内部 API、快速迭代期 | 直接 `/api/orders`，用功能开关控制 |
+
+**规则：**
+- 对外公开 API 必须版本化
+- 内部 API 可不版本化，但必须文档化破坏性变更
+- 版本废弃必须提前通知，保留至少 2 个版本的过渡期
+
+---
+
+## 10. 依赖注入（DI）
+
+### 后端 DI
+
+| 技术栈 | DI 方案 | 说明 |
+|--------|---------|------|
+| NestJS | 内置 IoC 容器 | `@Injectable()` + 构造函数注入 |
+| Spring Boot | Spring IoC | `@Component` / `@Service` + `@Autowired` |
+| Go | 手动注入 / wire / fx | 推荐 wire 编译时生成 |
+| FastAPI | FastAPI Depends | 函数级依赖注入 |
+
+**规则：**
+- 依赖注入在 Application 层完成，Domain 层不依赖具体实现
+- 接口定义在 Domain 层，实现在 Infrastructure 层
+- 禁止在 Domain 层直接 new 具体类
+
+---
+
+## 11. Monorepo 结构（L 级可选）
+
+当项目包含前端 + 后端 + 共享类型时，采用 Monorepo：
+
+```
+project
+├── packages/
+│   ├── shared/          # 前后端共享类型、常量、工具函数
+│   ├── client/          # 前端应用
+│   │   ├── core/
+│   │   ├── modules/
+│   │   └── ...
+│   ├── server/          # 后端应用
+│   │   ├── core/
+│   │   ├── modules/
+│   │   └── ...
+│   └── admin/           # 管理后台（可选）
+├── package.json         # Monorepo 根配置
+├── turbo.json / nx.json # 构建编排配置
+└── README.md
+```
+
+**工具选择：**
+- **pnpm workspaces** — 通用 Monorepo 管理（推荐）
+- **Turborepo** — 构建缓存、并行任务
+- **Nx** — 代码生成、依赖图分析
+
+**规则：**
+- `packages/shared/` 放前后端共享的 TypeScript 类型、枚举、常量
+- 前端 Core 和后端 Core 独立，不混用
+- 每个包有自己的 `package.json`，通过 workspace 协议引用

@@ -71,6 +71,7 @@ project-architecture-en/
 │   ├── agent-coding-rule.md        # .agent/coding-rule.md template
 │   ├── agent-workflow.md           # .agent/workflow.md template
 │   ├── adr-template.md             # Architecture Decision Record template
+│   ├── domain-model-template.md    # Domain model sketch template (Product mode)
 │   └── project-readme-template.md  # Project README template
 └── README.md
 ```

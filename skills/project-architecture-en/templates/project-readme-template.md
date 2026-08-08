@@ -43,6 +43,30 @@ Core principles:
 
 <!-- Deployment target, release steps, required environment variables -->
 
+## Environment Variables
+
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+|  |  |  |  |
+
+> Sensitive variables (passwords, keys) MUST NOT be committed to the repo. Use `.env.local` or a secret management service.
+
+## API Documentation
+
+<!-- Fill in for backend projects -->
+- Docs URL: <!-- Swagger UI / Postman / other -->
+- Style: <!-- RESTful / GraphQL / gRPC -->
+
+## Troubleshooting
+
+| Problem | Cause | Solution |
+|---------|-------|----------|
+|  |  |  |
+
+## FAQ
+
+<!-- Common questions during development -->
+
 ## Development Standards
 
 - Branches: `feature/*` cut from `main`, merged via PR

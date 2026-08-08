@@ -180,3 +180,158 @@ Each ADR must contain:
 4. **Decision** — what was chosen and why
 5. **Consequences** — affected modules
 6. **Future reversal conditions** — what could overturn this decision
+
+---
+
+## 6. Frontend Business Module Structure
+
+Frontend business modules differ from backend DDD — they use a feature-oriented organization:
+
+```
+modules
+└── order
+    ├── api              # Module API calls (via core/http)
+    ├── components/      # Module-specific components
+    │   ├── OrderList.vue
+    │   ├── OrderDetail.vue
+    │   └── OrderForm.vue
+    ├── composables/     # Composition logic (Vue) / hooks (React)
+    │   ├── useOrder.ts
+    │   └── useOrderStatus.ts
+    ├── stores/          # Module state (Pinia / Zustand)
+    │   └── orderStore.ts
+    ├── types/           # Module type definitions
+    │   └── order.d.ts
+    ├── views/           # Page-level components
+    │   ├── OrderListView.vue
+    │   └── OrderDetailView.vue
+    ├── routes.ts        # Module route definitions
+    └── index.ts         # Module public exports
+```
+
+**Rules:**
+- Module components MUST NOT directly import other modules' components — cross-module communication goes through Core or event mechanisms
+- Module API calls MUST go through `core/http` — never import axios/fetch directly
+- Module state is managed independently; global shared state goes in Core
+
+---
+
+## 7. Module Communication Patterns
+
+### 7.1 Backend Inter-Module Communication
+
+| Pattern | Use case | Example |
+|---------|----------|---------|
+| Direct call (same process) | Between modules in the same service | Order module calls Inventory module's Application Service |
+| Event-driven (async) | Decoupling, cross-module notification | Order created → event → Inventory consumes to deduct stock |
+| API call (cross-service) | Microservice architecture | Order service calls Payment service's REST API |
+| Message queue (cross-service async) | Microservice async communication | Order service sends message to MQ, Shipping service consumes |
+
+**Rules:**
+- Same-process direct calls go through the Application Service layer, not the interfaces layer
+- Cross-module direct calls must use dependency injection — no hardcoded dependencies
+- Event-driven communication must define clear event schemas (recommend recording via ADR)
+
+### 7.2 Frontend Inter-Module Communication
+
+| Pattern | Use case | Example |
+|---------|----------|---------|
+| Props / Events | Parent-child component communication | OrderList emits select event to parent |
+| Global state (Core Store) | Cross-module shared state | User info, permissions in Core/auth store |
+| Event bus (lightweight) | Stateless cross-component notification | Show global Toast, refresh data lists |
+| Route params | Page-to-page data passing | Order list → detail page passing orderId |
+
+**Rules:**
+- Cross-module shared state goes in Core Store (user info, permissions, global config)
+- Module-private state stays in the module's own Store
+- Never directly import components across modules — promote to Core/ui for reuse
+
+---
+
+## 8. Database Migration Strategy
+
+### 8.1 Migration Tool Selection
+
+| Tech stack | Migration tool | Notes |
+|-----------|---------------|-------|
+| Node.js + Prisma | Prisma Migrate | Built-in, schema-first |
+| Node.js + TypeORM | TypeORM Migrations | Built-in |
+| Java + MyBatis Plus / JPA | Flyway / Liquibase | Flyway is simpler; Liquibase is more powerful |
+| Go + Gorm | golang-migrate / Gorm AutoMigrate | golang-migrate is more standard |
+| Python + SQLAlchemy | Alembic | Officially recommended by SQLAlchemy |
+| Python + Django | Django Migrations | Built-in |
+
+### 8.2 Migration Standards
+
+- **Every schema change MUST generate a migration script** — never modify the database manually
+- **Committed migration scripts are immutable** — create a reverse migration to roll back
+- **Destructive changes (drop column, change type) MUST be two steps:** mark deprecated first → delete in the next version
+- **Migration scripts MUST be reversible** (unless data loss is unavoidable, documented in an ADR)
+- **Test migrations in a test environment before production**
+
+---
+
+## 9. API Versioning Strategy
+
+| Strategy | Use case | Example |
+|----------|----------|---------|
+| URL versioning | General RESTful API | `/api/v1/orders`, `/api/v2/orders` |
+| Header versioning | When URL cleanliness matters | `Accept: application/vnd.api+json;version=1` |
+| No versioning | Internal API, rapid iteration | `/api/orders` directly, feature flags control behavior |
+
+**Rules:**
+- Public-facing APIs MUST be versioned
+- Internal APIs may skip versioning but MUST document breaking changes
+- Version deprecation requires advance notice and at least 2 versions of transition period
+
+---
+
+## 10. Dependency Injection (DI)
+
+### Backend DI
+
+| Tech stack | DI solution | Notes |
+|-----------|-------------|-------|
+| NestJS | Built-in IoC container | `@Injectable()` + constructor injection |
+| Spring Boot | Spring IoC | `@Component` / `@Service` + `@Autowired` |
+| Go | Manual injection / wire / fx | wire recommended for compile-time generation |
+| FastAPI | FastAPI Depends | Function-level dependency injection |
+
+**Rules:**
+- DI happens at the Application layer; the Domain layer does not depend on concrete implementations
+- Interfaces are defined in the Domain layer; implementations in the Infrastructure layer
+- Never `new` concrete classes directly in the Domain layer
+
+---
+
+## 11. Monorepo Structure (Tier-L optional)
+
+When a project includes frontend + backend + shared types, use a Monorepo:
+
+```
+project
+├── packages/
+│   ├── shared/          # Shared types, constants, utility functions (FE+BE)
+│   ├── client/          # Frontend application
+│   │   ├── core/
+│   │   ├── modules/
+│   │   └── ...
+│   ├── server/          # Backend application
+│   │   ├── core/
+│   │   ├── modules/
+│   │   └── ...
+│   └── admin/           # Admin dashboard (optional)
+├── package.json         # Monorepo root config
+├── turbo.json / nx.json # Build orchestration config
+└── README.md
+```
+
+**Tool selection:**
+- **pnpm workspaces** — general Monorepo management (recommended)
+- **Turborepo** — build caching, parallel tasks
+- **Nx** — code generation, dependency graph analysis
+
+**Rules:**
+- `packages/shared/` holds TypeScript types, enums, constants shared between FE and BE
+- Frontend Core and backend Core are independent — never mix them
+- Each package has its own `package.json`, referencing others via the workspace protocol

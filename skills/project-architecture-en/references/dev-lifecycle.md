@@ -135,6 +135,46 @@ Tests must cover:
 - **Error paths** — error handling, invalid input
 - **Edge cases** — boundary conditions, extreme values
 
+### Test Directory Structure
+
+```
+tests/
+├── unit/               # Unit tests (mirrors source directory structure)
+│   ├── core/
+│   │   ├── auth/
+│   │   └── http/
+│   └── modules/
+│       └── order/
+├── integration/        # Integration tests (module interactions, API endpoints)
+│   └── order-api.test.ts
+└── e2e/                # End-to-end tests (critical business flows)
+    └── order-flow.test.ts
+```
+
+**Rules:**
+- Unit test files live alongside source or in `__tests__` subdirectories — follow project conventions
+- Integration tests go in `tests/integration/`, named `<module>-api.test.ts`
+- E2E tests go in `tests/e2e/`, named `<flow-name>-flow.test.ts`
+
+### Mock Strategy
+
+| Scenario | Mock strategy |
+|----------|--------------|
+| Unit tests | Mock external dependencies (database, HTTP, filesystem) |
+| Integration tests | Use real database (test DB) or in-memory DB; mock external APIs |
+| E2E tests | No mocks; use a full test environment |
+
+**Rules:**
+- Mocks are created at test boundaries — never侵入 business code
+- Business code never hardcodes mock logic — testability is achieved via dependency injection
+- External API mocks use record-replay (e.g., Pact / MSW) to preserve real response structures
+
+### Test Data Management
+
+- **Test data factories** — use factory functions or Builder pattern to generate test data; never hardcode in tests
+- **Test database** — reset before each test run; initialize with migration scripts
+- **Fixtures** — shared test data goes in `tests/fixtures/`, organized by module
+
 ---
 
 ## 5. Security Standards

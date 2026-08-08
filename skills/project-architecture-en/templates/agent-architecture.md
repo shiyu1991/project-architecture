@@ -4,6 +4,10 @@
 
 ## Tech Stack
 
+> Delete the backend section for frontend-only projects; delete the frontend section for backend-only projects.
+
+### Frontend Tech Stack
+
 | Layer | Choice | Version | Date | ADR |
 |-------|--------|---------|------|-----|
 | Main framework |  |  |  |  |
@@ -17,13 +21,28 @@
 | Form validation |  |  |  |  |
 | Test framework |  |  |  |  |
 | Code quality |  |  |  |  |
-| Backend framework |  |  |  |  |
+
+### Backend Tech Stack
+
+| Layer | Choice | Version | Date | ADR |
+|-------|--------|---------|------|-----|
+| Main language |  |  |  |  |
+| Framework |  |  |  |  |
+| API style |  |  |  |  |
 | ORM |  |  |  |  |
 | Database |  |  |  |  |
 | Cache |  |  |  |  |
 | Auth |  |  |  |  |
+| Logging |  |  |  |  |
+| Test framework |  |  |  |  |
+
+### Cross-Cutting / Ops
+
+| Layer | Choice | Version | Date | ADR |
+|-------|--------|---------|------|-----|
 | CI/CD |  |  |  |  |
 | Monitoring |  |  |  |  |
+| Deployment |  |  |  |  |
 
 ## Directory Structure
 

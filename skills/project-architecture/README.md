@@ -71,6 +71,7 @@ project-architecture/
 │   ├── agent-coding-rule.md        # .agent/coding-rule.md 模板
 │   ├── agent-workflow.md           # .agent/workflow.md 模板
 │   ├── adr-template.md             # 架构决策记录模板
+│   ├── domain-model-template.md    # 领域模型草图模板（产品模式用）
 │   └── project-readme-template.md  # 项目 README 模板
 └── README.md
 ```

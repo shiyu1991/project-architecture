@@ -355,15 +355,83 @@ header: "前端-表单验证"
 
 ### 移动端技术
 
-移动端选型独立于前端 Web 选型流程：
+移动端选型独立于前端 Web 选型流程。当项目类型判定为"小程序 / 移动端"时，使用以下逐层选型流程：
 
-| 选项 | 适用场景 |
-|------|----------|
-| Flutter | 跨平台、高性能 UI |
-| React Native | JS/TS 团队、跨平台 |
-| UniApp | 小程序 + 移动端、国内市场 |
-| Android Native | Android 优先、最大平台集成 |
-| iOS Native | iOS 优先、最大平台集成 |
+#### 移动端 Layer 1: 跨平台框架（互斥选一）
+
+| 方案 | 特点 | 适用场景 |
+|------|------|----------|
+| UniApp | Vue 语法、小程序 + APP + H5 全覆盖、国内生态 | 国内小程序、多端发布（默认推荐） |
+| Flutter | 跨平台、高性能 UI、Dart 语言 | 高性能跨平台 APP |
+| React Native | JS/TS 团队、跨平台、React 生态 | JS/TS 团队、跨平台 APP |
+| Android Native | Android 优先、最大平台集成 | Android 优先 |
+| iOS Native | iOS 优先、最大平台集成 | iOS 优先 |
+
+#### 移动端 Layer 2: 开发语言（根据框架推荐）
+
+| 框架 | 语言 | 说明 |
+|------|------|------|
+| UniApp | Vue (JavaScript/TypeScript) | 与 Web 前端 Vue 一致 |
+| Flutter | Dart | Flutter 专用语言 |
+| React Native | JavaScript/TypeScript | 与 Web 前端 React 一致 |
+| Android Native | Kotlin / Java | Kotlin 为 Google 推荐 |
+| iOS Native | Swift / Objective-C | Swift 为 Apple 推荐 |
+
+#### 移动端 Layer 3: UI 组件库（根据框架推荐）
+
+| 框架 | UI 组件库 | 说明 |
+|------|----------|------|
+| UniApp | uView / uni-ui / Vant Weapp | uView 组件全、uni-ui 官方、Vant 适合微信小程序 |
+| Flutter | Material / Cupertino | Flutter 内置 |
+| React Native | React Native Paper / NativeBase | Material Design / 跨平台组件 |
+| Android Native | Material Components | Google 官方 |
+| iOS Native | SwiftUI / UIKit | SwiftUI 为 Apple 推荐 |
+
+#### 移动端 Layer 4: 状态管理（根据框架推荐）
+
+| 框架 | 状态管理 | 说明 |
+|------|----------|------|
+| UniApp | Pinia / Vuex | 与 Web Vue 一致 |
+| Flutter | Riverpod / Bloc / Provider | Riverpod 为现代推荐 |
+| React Native | Zustand / Redux Toolkit | 与 Web React 一致 |
+| Android Native | ViewModel + LiveData / Compose State | Jetpack 组件 |
+| iOS Native | SwiftUI @State / Combine | SwiftUI 内置 |
+
+#### 移动端 Layer 5: 网络请求（互斥选一）
+
+| 方案 | 特点 | 适用场景 |
+|------|------|----------|
+| 框架内置请求 | UniApp uni.request / Flutter http / RN fetch | 默认推荐，零额外依赖 |
+| Axios | 拦截器机制、社区大 | JS/TS 项目（UniApp/RN） |
+| Dio | Flutter 最流行 HTTP 客户端 | Flutter 项目 |
+
+#### 移动端 Layer 6: 本地存储（互斥选一）
+
+| 方案 | 特点 | 适用场景 |
+|------|------|----------|
+| 框架内置存储 | UniApp uni.setStorage / Flutter shared_preferences / RN AsyncStorage | 默认推荐 |
+| 本地数据库 | SQLite / Realm / WatermelonDB | 离线数据、大量本地数据 |
+| MMKV | 高性能 KV 存储 | 高性能 KV 需求 |
+
+#### 移动端 Layer 7: 测试框架（根据框架推荐）
+
+| 框架 | 测试框架 | 说明 |
+|------|----------|------|
+| UniApp | Vitest / Jest | 与 Web Vue 一致 |
+| Flutter | Flutter test（内置） | 官方内置 |
+| React Native | Jest / Detox | Jest 单元测试、Detox E2E |
+| Android Native | JUnit / Espresso | Google 推荐 |
+| iOS Native | XCTest | Apple 官方 |
+
+#### 移动端兼容性矩阵（结构性绑定）
+
+| | UniApp | Flutter | React Native | Android Native | iOS Native |
+|---|---|---|---|---|---|
+| **Vue** | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Dart** | ❌ | ✅ | ❌ | ❌ | ❌ |
+| **JS/TS** | ✅ | ❌ | ✅ | ❌ | ❌ |
+| **Kotlin** | ❌ | ❌ | ❌ | ✅ | ❌ |
+| **Swift** | ❌ | ❌ | ❌ | ❌ | ✅ |
 
 ---
 
@@ -470,11 +538,11 @@ header: "前端-表单验证"
 | **Ant Design Vue** (Vue) | L9 表单验证 | 与 Ant Design 一致的表单验证 | 跳过 L9，标记"已覆盖" |
 | **Naive UI** (Vue) | L9 表单验证 | `n-form` 内置验证 | 跳过 L9，标记"已覆盖" |
 | **MUI** (React) | L9 表单验证 | `FormControl` + `TextField` 验证 | 跳过 L9，标记"已覆盖" |
-| **Vue Router** | L8 路由 | 官方路由方案 | 自动锁定，不再询问 |
-| **React Router** | L8 路由 | React 生态标准路由 | 自动锁定，不再询问 |
-| **Next.js** | L3 构建 + L8 路由 | 内置 Turbopack 构建 + App Router | 自动锁定 L3 和 L8 |
-| **SvelteKit** | L3 构建 + L8 路由 | 内置 Vite 构建 + 文件路由 | 自动锁定 L3 和 L8 |
-| **Nuxt** (Vue) | L3 构建 + L8 路由 | 内置 Vite 构建 + 文件路由 | 自动锁定 L3 和 L8 |
+| **Vue Router** | L8 路由 | 官方路由方案 | 推荐"使用内置"，标注"已覆盖"，仍需用户确认 |
+| **React Router** | L8 路由 | React 生态标准路由 | 推荐"使用内置"，标注"已覆盖"，仍需用户确认 |
+| **Next.js** | L3 构建 + L8 路由 | 内置 Turbopack 构建 + App Router | 推荐"使用内置"，标注"已覆盖"，仍需用户确认 |
+| **SvelteKit** | L3 构建 + L8 路由 | 内置 Vite 构建 + 文件路由 | 推荐"使用内置"，标注"已覆盖"，仍需用户确认 |
+| **Nuxt** (Vue) | L3 构建 + L8 路由 | 内置 Vite 构建 + 文件路由 | 推荐"使用内置"，标注"已覆盖"，仍需用户确认 |
 
 ### 后端框架能力覆盖
 
@@ -653,12 +721,13 @@ Layer 10: 后端-测试框架   →  Layer 11: 后端-文件存储   →  Layer 
 | Java | 企业级首选、生态最成熟、Spring 生态强大、人才储备多 | 企业级系统、大型项目 |
 | Node.js（TypeScript） | 全栈同语言、开发效率高、前后端统一 | 快速开发、全栈团队、中小型项目 |
 | Go | 编译型高性能、原生并发、部署简单 | 高性能服务、微服务、云原生 |
+| Python | AI/ML 友好、快速开发、生态丰富 | AI 后端、数据分析、快速原型、内容管理 |
 
 **选择信号：** 大型企业系统 / 国内传统企业 → Java；前后端同构 / 快速迭代 → Node.js；高并发 / 云原生 / 基础设施工具 → Go。
 
 **互斥原则：** 只能选择一种主语言，选择后锁定。版本一律选择当前 LTS（按 0.1 协议实时确认）。
 
-**用户自定义：** 可输入其他语言（如 Python、Rust、C#），AI Agent 仅做兼容性提示；Python 的框架候选见 Layer 2。
+**用户自定义：** 可输入其他语言（如 Rust、C#），AI Agent 仅做兼容性提示。
 
 ---
 
@@ -688,7 +757,7 @@ Layer 10: 后端-测试框架   →  Layer 11: 后端-文件存储   →  Layer 
 | Fiber | Express 风格 API、极速路由 | 高性能 API 服务 |
 | Echo | 简洁、高性能、中间件丰富 | 中型项目 |
 
-#### Python 生态（用户自定义主语言时推荐）
+#### Python 生态
 
 | 方案 | 特点 | 适用场景 |
 |------|------|----------|
@@ -740,7 +809,15 @@ Layer 10: 后端-测试框架   →  Layer 11: 后端-文件存储   →  Layer 
 | sqlx | 轻量、原生 SQL、struct 扫描 | 原生 SQL 偏好 |
 | ent | Schema 优先、代码生成 | 复杂关系数据 |
 
-**选择信号：** 国内 Java 团队 → MyBatis Plus；国际化 Java 团队 → JPA；Node 项目 → Prisma 优先。
+#### Python 生态
+
+| 方案 | 特点 | 适用场景 | 能力覆盖状态 |
+|------|------|----------|-------------|
+| SQLAlchemy | Python 生态标准 ORM、功能强大、支持多种模式 | 通用 Python 项目（默认推荐） | 独立方案 |
+| Django ORM | Django 内置、与 Admin 深度集成 | Django 项目 | Django 已内置，标记"已覆盖" |
+| Tortoise ORM | 异步 ORM、Django 风格 API | FastAPI / 异步项目 | 独立方案 |
+
+**选择信号：** 国内 Java 团队 → MyBatis Plus；国际化 Java 团队 → JPA；Node 项目 → Prisma 优先；Django 项目 → 使用内置 Django ORM；FastAPI 项目 → SQLAlchemy 或 Tortoise ORM。
 
 **互斥原则：** 只能选择一个 ORM/数据访问方案。
 
@@ -836,6 +913,14 @@ Layer 10: 后端-测试框架   →  Layer 11: 后端-文件存储   →  Layer 
 | Logrus | 结构化日志、API 友好 | 通用 Go 项目 |
 | slog（标准库） | 官方内置、零依赖、结构化 | 新版本 Go 项目 |
 
+#### Python 生态
+
+| 方案 | 特点 | 适用场景 | 能力覆盖状态 |
+|------|------|----------|-------------|
+| Loguru | 开箱即用、结构化、文件轮转、异常追踪 | 通用 Python 项目（推荐） | 独立方案 |
+| structlog | 结构化日志、JSON 输出 | 结构化日志需求 | 独立方案 |
+| 框架内置日志 | Django logging / Uvicorn 日志 | 小型项目 | Django/FastAPI 已内置，简单场景可跳过 |
+
 **互斥原则：** 只能选择一个日志系统。
 
 ---
@@ -865,6 +950,14 @@ Layer 10: 后端-测试框架   →  Layer 11: 后端-文件存储   →  Layer 
 | Go testing（标准库） | 官方内置、零依赖、基准测试 | 所有 Go 项目（默认） |
 | testify | 断言库、Mock、Suite | 增强标准库 |
 | Ginkgo | BDD 风格测试框架 | BDD 风格偏好 |
+
+#### Python 生态
+
+| 方案 | 特点 | 适用场景 |
+|------|------|----------|
+| Pytest | 最流行、插件丰富、fixture 机制、参数化测试 | Python 项目（默认推荐） |
+| Unittest | 标准库内置、零依赖 | 简单项目、标准库偏好 |
+| Robot Framework | 关键字驱动、BDD 风格 | BDD 风格偏好 |
 
 **互斥原则：** 只能选择一个测试框架。
 
@@ -916,6 +1009,14 @@ Layer 10: 后端-测试框架   →  Layer 11: 后端-文件存储   →  Layer 
 | gocron | 链式 API、简单易用 | 偏好链式 API |
 | 标准库 time.Ticker | 零依赖、最简单 | 固定间隔任务 |
 
+#### Python 生态
+
+| 方案 | 特点 | 适用场景 | 能力覆盖状态 |
+|------|------|----------|-------------|
+| Celery | 分布式任务队列、定时任务、重试 | 分布式定时任务（推荐） | 独立方案 |
+| APScheduler | 轻量定时任务、Cron 表达式 | 单机定时任务 | 独立方案 |
+| Django cron | Django 内置定时任务 | Django 项目简单场景 | Django 可选内置 |
+
 **互斥原则：** 只能选择一个定时任务方案。
 
 **跳过条件：** 无定时任务需求可选择"暂不需要"。
@@ -964,6 +1065,18 @@ Layer 10: 后端-测试框架   →  Layer 11: 后端-文件存储   →  Layer 
 | Gin + 文件存储 | S3 / MinIO 的 Go SDK | 对象存储集成 | 文件存储必装 |
 | Gin + 定时任务 | `robfig/cron` | 定时任务调度 | 定时任务必装 |
 
+### Python 生态
+
+| 框架 + ORM | 推荐插件 | 用途 | 是否必装 |
+|------------|----------|------|----------|
+| FastAPI | `uvicorn[standard]` | ASGI 服务器 | 必装 |
+| FastAPI | `python-multipart` | 文件上传支持 | 文件上传必装 |
+| FastAPI + SQLAlchemy | `alembic` | 数据库迁移 | 推荐 |
+| Django | `django-rest-framework` | REST API 开发 | API 项目推荐 |
+| Django | `django-cors-headers` | CORS 支持 | 前后端分离必装 |
+| FastAPI / Django + 文件存储 | `boto3` (S3) / `minio` SDK | 对象存储集成 | 文件存储必装 |
+| Python + 定时任务 | `celery[redis]` | Celery + Redis 后端 | 定时任务必装 |
+
 ### 通用推荐（不限语言）
 
 | 插件/工具 | 用途 | 是否必装 |
@@ -981,22 +1094,24 @@ Layer 10: 后端-测试框架   →  Layer 11: 后端-文件存储   →  Layer 
 
 ### 主语言 × 后端框架
 
-| | Spring Boot | Quarkus | NestJS | Express | Gin | Fiber | FastAPI | Django |
-|---|---|---|---|---|---|---|---|---|
-| **Java** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Node.js** | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Go** | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ |
-| **Python** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| | Spring Boot | Quarkus | NestJS | Express | Gin | Fiber | FastAPI | Django | Flask |
+|---|---|---|---|---|---|---|---|---|---|
+| **Java** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Node.js** | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Go** | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Python** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
 
 ### 后端框架 × ORM
 
-| | MyBatis Plus | JPA | Prisma | TypeORM | Gorm | sqlx | SQLAlchemy |
-|---|---|---|---|---|---|---|---|
-| **Spring Boot** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **NestJS** | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Express** | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Gin** | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ |
-| **FastAPI** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| | MyBatis Plus | JPA | Prisma | TypeORM | Gorm | sqlx | SQLAlchemy | Django ORM | Tortoise ORM |
+|---|---|---|---|---|---|---|---|---|---|
+| **Spring Boot** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **NestJS** | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Express** | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Gin** | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **FastAPI** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
+| **Django** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ |
+| **Flask** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
 
 ### ORM × 数据库
 
@@ -1009,6 +1124,8 @@ Layer 10: 后端-测试框架   →  Layer 11: 后端-文件存储   →  Layer 
 | **Gorm** | ✅ | ✅ | ✅ |
 | **sqlx** | ✅ | ✅ | ❌ |
 | **SQLAlchemy** | ✅ | ✅ | ✅ |
+| **Django ORM** | ✅ | ✅ | ❌ |
+| **Tortoise ORM** | ✅ | ✅ | ✅ |
 
 ### 主语言 × 测试框架
 
@@ -1021,10 +1138,12 @@ Layer 10: 后端-测试框架   →  Layer 11: 后端-文件存储   →  Layer 
 
 ### 主语言 × 定时任务方案
 
-| | @Scheduled / @nestjs/schedule | XXL-Job | Quartz | Bull 系 | robfig/cron |
-|---|---|---|---|---|---|
-| **Java** | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **Node.js** | ✅（NestJS） | ❌ | ❌ | ✅ | ❌ |
+| | @Scheduled / @nestjs/schedule | XXL-Job | Quartz | Bull 系 | robfig/cron | Celery | APScheduler |
+|---|---|---|---|---|---|---|---|
+| **Java** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Node.js** | ✅（NestJS） | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| **Go** | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| **Python** | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
 | **Go** | ❌ | ❌ | ❌ | ❌ | ✅ |
 
 **图例：** ✅ 兼容 | ❌ 不兼容（结构性） | ⚠️ 需额外配置（以实时验证为准）
@@ -1126,9 +1245,37 @@ AI Agent：已锁定 后端-框架: Hono。进入 后端-API 规范...
 
 ## 6. 已有项目反向分析
 
-当用户提供 GitHub 地址、Git 仓库或项目压缩包时，AI Agent 必须：
+当用户提供 GitHub 地址、Git 仓库或项目压缩包时，AI Agent 必须按以下流程执行反向分析。
 
-### 分析内容
+### 6.1 分析步骤（强制按序执行）
+
+**Step 1: 读取项目元信息**
+- 读取 `README.md`、`.agent/` 目录（如存在）、`package.json` / `pom.xml` / `go.mod` / `requirements.txt`
+- 识别项目定位、业务目标、技术栈、规模级别
+
+**Step 2: 分析目录结构**
+- 列出一级和二级目录树
+- 识别架构模式（Core + DDD / 分层 / MVC / 无结构）
+- 检查是否有 `core/` / `modules/` / `tests/` / `docs/adr/` 等规范目录
+- 判断是否符合 SKILL.md 规模分级对应的架构策略
+
+**Step 3: 分析技术栈**
+- 从依赖文件提取技术栈和版本
+- 对照 `references/tech-stack-guide.md` 兼容性矩阵，检查是否存在不兼容组合
+- 检查版本是否过时（按 0.1 协议实时查询最新版本对比）
+
+**Step 4: 分析代码质量**
+- 检查是否有 ESLint / Prettier / Biome 等代码质量工具配置
+- 检查是否有测试目录和测试覆盖率配置
+- 检查是否有 `.env` 管理和环境变量使用规范
+- 检查是否有硬编码敏感信息（快速扫描）
+
+**Step 5: 分析公共能力复用**
+- 检查是否有 `core/` 层和公共能力封装
+- 检查业务模块是否直接调用底层库（如 axios / fetch）而非通过 Core
+- 识别重复造轮子的模块
+
+### 6.2 分析内容
 
 - 项目结构
 - 技术栈
@@ -1137,11 +1284,55 @@ AI Agent：已锁定 后端-框架: Hono。进入 后端-API 规范...
 - 架构模式
 - 公共组件
 - 代码质量
+- 测试覆盖
+- 安全实践
 
-### 输出内容
+### 6.3 输出格式（强制）
 
-- 当前项目技术画像
-- 推荐优化方案
-- 可复用模块
-- 待重构模块
-- 未来架构建议
+```
+## 项目反向分析报告
+
+### 1. 项目概况
+- 项目名：
+- 项目定位：
+- 规模级别：S / M / L（判定依据）
+- 当前阶段：原型 / MVP / 增长期 / 稳定维护期
+
+### 2. 技术栈画像
+| 层 | 选型 | 版本 | 最新版本 | 状态 |
+|----|------|------|----------|------|
+|  |  |  |  | ✅ 最新 / ⚠️ 过时 / ❌ 不兼容 |
+
+### 3. 架构评估
+- 架构模式：
+- 是否符合规模分级策略：
+- 目录规范度：✅ 规范 / ⚠️ 部分 / ❌ 混乱
+- Core 层完整度：
+- 模块化程度：
+
+### 4. 代码质量评估
+- 代码质量工具：
+- 测试覆盖：
+- 安全实践：
+- 文档完整度：
+
+### 5. 问题清单
+| # | 问题 | 严重度 | 建议方案 |
+|---|------|--------|----------|
+| 1 |  | 高/中/低 |  |
+
+### 6. 可复用模块
+| 模块 | 能力 | 复用价值 |
+|------|------|----------|
+|  |  |  |
+
+### 7. 待重构模块
+| 模块 | 问题 | 优先级 |
+|------|------|--------|
+|  |  |  |
+
+### 8. 优化建议（按优先级排序）
+1. **P0（必须修复）** — 
+2. **P1（建议修复）** — 
+3. **P2（可优化）** — 
+```
