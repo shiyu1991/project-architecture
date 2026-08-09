@@ -873,6 +873,8 @@ Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 
 | Go | Compiled performance, native concurrency, simple deployment | High-performance services, microservices, cloud-native |
 | Python | AI/ML friendly, rapid development, rich ecosystem | AI backends, data analysis, rapid prototyping, content management |
 
+> **Emerging runtimes (Node.js ecosystem):** Bun (ultra-fast startup, built-in bundler/test runner/package manager) and Deno (secure sandbox, native TypeScript, Web-standard APIs) are rapidly evolving. When Node.js is selected, the AI Agent should prompt the user to consider Bun/Deno as runtime alternatives, but label them "emerging — observe before production use."
+
 **Signals:** large enterprise systems / traditional enterprises in China → Java; isomorphic FE/BE / rapid iteration → Node.js; high concurrency / cloud-native / infra tooling → Go; AI/ML / data analysis / rapid prototyping → Python.
 
 **Multi-select assessment:** ❌ Mutually exclusive — a backend service uses only one main language; single-select only. Always pick the current LTS (verify per protocol 0.1).
@@ -1364,6 +1366,21 @@ These choices are not frontend/backend-specific — they are project-wide archit
 **Multi-select assessment:** ⚠️ Context-dependent — same-type APM is mutually exclusive (e.g., Sentry vs. Datadog, pick one); but "error monitoring (Sentry) + metrics monitoring (Prometheus+Grafana) + log collection (ELK/Loki)" don't conflict — they're different monitoring dimensions and can combine. Error monitoring main solution is single-select; other dimensions are selected separately in universal recommendations. Default `multiSelect: false`
 
 **Pairing tip:** error monitoring + Prometheus + Grafana (metrics) is a common open-source combo.
+
+---
+
+### Security Scanning / SAST / DAST (multi-select viable, different dimensions)
+
+| Option | Traits | Best for |
+|--------|--------|----------|
+| SonarQube / SonarCloud | Code quality + security vulnerability static scanning, CI integration | All projects (general recommendation) |
+| Snyk | Dependency vulnerability scanning, auto-fix PRs, multi-language | Dependency security auditing |
+| Trivy | Container image + IaC + dependency scanning, open-source & free | Containerized deployment projects |
+| OWASP ZAP | Dynamic security scanning (DAST), API security testing | Security testing needs |
+
+**Multi-select assessment:** ✅ Viable — SAST (static scanning) + dependency vulnerability scanning + container image scanning + DAST (dynamic scanning) don't conflict; they cover different security dimensions and can combine. When multi-selected, run in separate CI/CD pipeline stages. `multiSelect: true`
+
+**Pairing tip:** SonarQube (code quality + SAST) + Snyk (dependency vulnerabilities) + Trivy (image scanning) is a common open-source security combo.
 
 ---
 

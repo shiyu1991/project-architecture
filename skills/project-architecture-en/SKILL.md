@@ -18,6 +18,27 @@ description: >-
 
 ---
 
+## Table of Contents
+
+| Section | Content | When to load |
+|---------|---------|---------------|
+| 1. Purpose | Core goals & principles | Always |
+| 2. Three User Modes | Guided / Product / Expert | At kickoff |
+| 3. Scale Tiers | S/M/L anti-over-engineering | At kickoff |
+| 3-A. Project Type | Full-stack / FE-only / BE-only / Mobile / Desktop / AI-ML | Before selection |
+| 4. Supreme Execution Principles | 8-step AI Agent flow | Always |
+| 5. Project Context Management | `.agent/` four-file set | When entering a project |
+| 6. Requirement Analysis | Business → Domain → App → Tech → Infra | During requirement analysis |
+| 7. Tech Selection Overview | Interactive checkbox + multi-select eval + linkage | During tech selection |
+| 8. Overall Architecture | Core + DDD + Plugin structure | During architecture design |
+| 9. AI Development Lifecycle | 6-phase process | During coding |
+| 10. Red Lines | Testing / Security / Core / Deletion / README | Always |
+| 11. Reference Index | references / templates load timing | As needed |
+
+> **Tool compatibility note:** The interactive selection in this Skill relies on the `ask_followup_question` tool (supported by CodeBuddy / Claude Code etc.). If your AI Agent does not support this tool, fall back to plain-text list selection with verbal user confirmation — all other protocols remain unaffected.
+
+---
+
 # 1. Purpose
 
 Guides AI Agents to perform, at a senior software architect level: project initialization, tech-stack selection, architecture design, module planning, coding, maintenance, and architecture evolution.
@@ -77,6 +98,7 @@ After scale classification, determine the project type to decide the selection f
 | Frontend-only | No backend / BFF only / static site / SPA | Phase 1 (frontend items + deployment) → Phase 2 (all frontend layers) → Phase 4 (cross-cutting) |
 | Backend-only API | No frontend / API service only | Phase 1 (backend items + database + deployment) → Phase 3 (all backend layers) → Phase 4 (cross-cutting) |
 | Mini-program / Mobile | WeChat mini-program / UniApp / Flutter / React Native | Mobile selection flow (see `references/tech-stack-guide.md` Mobile section) |
+| Desktop app | Electron / Tauri / desktop client | Phase 1 (frontend framework + desktop framework) → Phase 2 (all frontend layers) → Phase 4 (cross-cutting, incl. desktop packaging/auto-update) |
 | AI / ML Application | AI inference / training / data analysis | Phase 1 (Python preferred) → Phase 3 (all backend layers, AI frameworks in tech-stack-guide) → Phase 4 |
 
 **Timing:** After user-mode detection and scale classification, before tech selection. After classification, clearly inform the user of the project type and selection flow branch.
