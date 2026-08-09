@@ -148,7 +148,36 @@ In Product mode, this phase outputs a **domain-model sketch + core user flows** 
 
 # 7. Tech Selection Overview
 
-Tech selection uses **layer-by-layer interactive checkbox + dynamic research + capability awareness + linkage recommendations**: the AI Agent MUST use the `ask_followup_question` tool to let users select via checkboxes, not plain text recommendations; before presenting candidates at each layer, the AI MUST use `web_search` to dynamically research the current tech landscape (see `references/tech-stack-guide.md` protocol 0.4) — the document tables serve only as a reference baseline; during selection, detect the chosen framework's built-in capabilities and label "covered" hints in subsequent layers; link-recommend compatible companion frameworks and plugins.
+Tech selection uses **layer-by-layer interactive checkbox + dynamic research + capability awareness + linkage recommendations + multi-select compatibility evaluation**: the AI Agent MUST use the `ask_followup_question` tool to let users select via checkboxes, not plain text recommendations; before presenting candidates at each layer, the AI MUST use `web_search` to dynamically research the current tech landscape (see `references/tech-stack-guide.md` protocol 0.4) — the document tables serve only as a reference baseline; during selection, detect the chosen framework's built-in capabilities and label "covered" hints in subsequent layers; link-recommend compatible companion frameworks and plugins; **each layer defaults to single-select, but the AI Agent MUST evaluate per "Protocol 0.5 Multi-Select Compatibility Evaluation" whether the layer is suitable for multi-select — when multiple options don't conflict and each has irreplaceable strengths (e.g., Axios excels at upload/download progress, fetch excels at SSE/streaming), present with `multiSelect: true`; when multi-selected, encapsulate each option independently in the Core layer with a unified external interface**.
+
+## 7.0 Multi-Select Compatibility Evaluation Protocol (mandatory, highest priority)
+
+> **Core goal:** Relax the hard "pick exactly one" constraint. When multiple options in the same layer don't conflict and each has irreplaceable strengths, allow the user to multi-select and encapsulate each option separately in the Core layer, combining their strengths to improve system compatibility and stability.
+
+**The AI Agent MUST perform multi-select feasibility evaluation for every selection layer:**
+
+1. **Conflict detection** — Do candidates have structural conflicts?
+   - Conflict exists (e.g., Vue and React cannot coexist) → `multiSelect: false`
+   - No conflict → proceed to step 2
+2. **Complementarity assessment** — Does multi-select bring irreplaceable benefits?
+   - Complementary benefit → `multiSelect: true`, label each option's strengths and division of labor in the option description
+   - No complementary benefit → `multiSelect: false`
+3. **Encapsulation requirement** — When the user multi-selects, the AI Agent MUST encapsulate each option independently in the Core layer and expose a unified interface; business modules call only the Core interface
+
+**Typical multi-select viable layers:**
+- **Frontend-HTTP Client**: Axios (interceptors, progress monitoring) + fetch (SSE, streaming) — Core layer auto-routes by scenario
+- **Frontend-Test Framework**: Vitest (unit) + Playwright (E2E) — independent configs
+- **Frontend-CSS**: TailwindCSS (atomic layout) + CSS Modules (component isolation)
+- **Backend-API Style**: RESTful (external) + gRPC (internal) — gateway layering
+- **Backend-Cache**: Redis (distributed) + in-process cache (single-node high-freq) — two-tier cache
+- **Backend-File Storage**: S3/OSS (persistence) + local storage (temp files) — tiered storage
+- **Backend-Auth**: JWT (stateless API) + Session (forced logout) — dual auth channels
+
+**Typical mutually exclusive layers (no multi-select):**
+- Frontend-Main Framework, Frontend-UI Library, Frontend-State Management, Frontend-Router
+- Backend-Main Language, Backend-Framework, Backend-Database (primary), Backend-Logging
+
+**Key principle:** Multi-select is not the default behavior — it is a recommendation after AI Agent evaluation. The final decision to multi-select belongs to the user. See `references/tech-stack-guide.md` protocol 0.5 for detailed evaluation criteria, encapsulation spec, and the full layer matrix.
 
 ## 7.1 Supreme Principle: The User Always Has the Final Say (mandatory)
 
@@ -244,11 +273,11 @@ ask_followup_question({
       "Express (lightest, largest ecosystem)",
       "Fastify (performance-first, schema validation)"
     ], multiSelect: false },
-    { question: "Backend API style?", header: "Backend-API Style", options: [
+    { question: "Backend API style? (multi-select viable: RESTful external + gRPC internal is a common microservice combo)", header: "Backend-API Style", options: [
       "RESTful (recommended: universal standard, frontend-friendly)",
       "GraphQL (flexible queries, fetch-on-demand)",
-      "gRPC (high performance, strongly typed)"
-    ], multiSelect: false },
+      "gRPC (high performance, internal microservice comms)"
+    ], multiSelect: true },
     { question: "Backend ORM/data access?", header: "Backend-ORM/Data Access", options: [
       "Prisma (recommended: type-safe, schema-first)",
       "TypeORM (decorator style)",
@@ -264,8 +293,10 @@ ask_followup_question({
 - Each option labeled "recommended" with a one-sentence reason
 - **All question headers MUST include a "Frontend-" or "Backend-" prefix** (except Phase 1 global decisions)
 - **Mixing frontend and backend layers in the same batch is forbidden** (except Phase 1 global decisions)
+- **Each layer MUST be evaluated per "Protocol 0.5" for its multiSelect value** (multi-select viable layers use `true`, mutually exclusive layers use `false`)
 - Layers covered by the chosen framework show "use built-in" as the recommended option, but still require user confirmation
 - Companion plugins are presented as multi-select checkboxes for the user to pick as needed
+- When the user multi-selects, the AI Agent MUST encapsulate each option independently in the Core layer with a unified external interface
 
 ## 7.3 Capability Awareness & Redundancy Hints (mandatory)
 
@@ -394,6 +425,7 @@ Users may change a previously selected option during or after selection:
 - **Expert**: batch checkboxes, more candidates per batch (Top 3-5), recommended items labeled "recommended"; user selects layer by layer
 - **All modes**: dynamic version resolution (`npm view <pkg> version` / Maven Central / Go Module Proxy / PyPI); never reuse stale version numbers
 - **All modes**: before presenting candidates at each layer, MUST execute `web_search` to dynamically research and merge latest options; document tables are only a reference baseline (per tech-stack-guide.md protocol 0.4)
+- **All modes**: each layer MUST be evaluated per "Protocol 0.5" for its multiSelect value; multi-select viable layers (e.g., HTTP client, test framework, cache, file storage) use `true`, mutually exclusive layers use `false`
 - **All modes**: auto-filling, auto-locking, and skipping layers are forbidden. All layers must be confirmed by the user
 - **All modes**: all question headers MUST include a "Frontend-" or "Backend-" prefix (except Phase 1 global decisions)
 - **All modes**: mixing frontend and backend layers in the same batch is forbidden (except Phase 1 global decisions); complete all frontend selection before starting backend

@@ -21,6 +21,7 @@ This Skill encodes a senior architect's working method as an enforceable protoco
 | Three user modes | Auto-detected: fully-guided for beginners / business modeling for PMs / fast-track for developers |
 | Scale tiers | S/M/L classification — small projects never get big architectures (anti-over-engineering) |
 | Interactive checkbox selection | Uses `ask_followup_question` tool for users to check off tech choices; two phases: core framework selection + linked extended selection based on prior choices |
+| Multi-select compatibility evaluation | Each layer defaults to single-select; after AI evaluation, multi-select can be opened — when multiple options don't conflict and have complementary strengths (e.g., Axios for progress monitoring, fetch for SSE/streaming), users can multi-select and Core layer encapsulates each separately, improving compatibility and stability |
 | Capability awareness | Auto-detects built-in capabilities of chosen frameworks (e.g., Element Plus form validation, Spring Boot logging) and skips redundant layers — no duplicate recommendations |
 | Layered linkage recommendations | Choosing A auto-recommends B; earlier choices filter later options; companion plugins shown as multi-select checkboxes |
 | Compatibility matrices | Instant structural binding checks; version-level compatibility verified live |
@@ -80,7 +81,7 @@ project-architecture-en/
 
 1. **Understand before designing; architect before coding** — never generate a full feature from a one-liner
 2. **No hardcoded versions** — all versions resolved live at selection time; the docs never go stale
-3. **Interactive selection** — use checkboxes, not text confirmation, to let users choose their tech stack intuitively
+3. **Interactive selection** — use checkboxes, not text confirmation, to let users choose their tech stack intuitively; multi-select compatibility evaluation lets non-conflicting options combine, leveraging each one's strengths
 4. **Capability awareness** — auto-detect framework built-in capabilities, skip redundant recommendations, never reinvent the wheel
 5. **The user has the final say** — the AI only flags compatibility; it never overrides user choices
 6. **No big architectures on small projects** — if 50 lines solve it, don't write 200

@@ -103,13 +103,97 @@ Technology choices must weigh:
 
 **Forbidden:** choosing complex technology just to be "cutting-edge".
 
-### Layered Mutually Exclusive Selection
+### Layered Selection (default single-select; AI-evaluated multi-select allowed)
 
 - Proceed **layer by layer in order**; earlier choices constrain later options
-- Within each layer, options are **mutually exclusive** — pick exactly one
+- Within each layer, **default is single-select**; however, the AI Agent MUST evaluate whether the layer is suitable for multi-select per "Protocol 0.5 Multi-Select Compatibility Evaluation"
+- If the evaluation concludes "multi-select viable and beneficial" (no conflict + complementary strengths), the layer is presented with `multiSelect: true`, letting the user decide whether to check multiple options
+- If the evaluation concludes "mutually exclusive" (multi-select causes conflict or no benefit), the layer stays `multiSelect: false`
 - Offer **Top 3 common candidates** per layer (tables in this document are a reference baseline at time of writing; the AI Agent MUST dynamically research and merge latest candidates per protocol 0.4 before presenting)
 - Users may **skip recommendations** and enter any custom option
 - The AI Agent only raises **compatibility warnings** for custom choices — never overrides them
+
+### 0.5 Multi-Select Compatibility Evaluation Protocol (mandatory)
+
+> **Core goal:** Relax the hard "pick exactly one" constraint. When multiple options in the same layer don't conflict and each has irreplaceable strengths, allow the user to multi-select and encapsulate each option separately in the Core layer, combining their strengths to improve system compatibility and stability. The AI Agent MUST evaluate multi-select feasibility for every layer.
+
+#### Evaluation Flow (MUST execute before presenting candidates for each layer)
+
+1. **Conflict detection** — Do the candidates have structural conflicts?
+   - Conflict exists (e.g., Vue and React cannot coexist) → label "mutually exclusive, single-select only," `multiSelect: false`
+   - No conflict → proceed to step 2
+2. **Complementarity assessment** — Does multi-select bring irreplaceable benefits?
+   - Complementary benefit (e.g., Axios excels at upload/download progress, fetch excels at SSE/streaming) → label "multi-select viable, combine strengths," `multiSelect: true`
+   - No complementary benefit (fully overlapping functionality, multi-select is redundant) → label "single-select recommended," `multiSelect: false`
+3. **Encapsulation requirement** — When the user multi-selects, the AI Agent MUST provide independent encapsulation for each option in the Core layer and expose a unified interface; business modules only call the Core interface, never directly depend on a specific option
+
+#### Mandatory Encapsulation Spec for Multi-Select
+
+When a layer is multi-selected by the user, the AI Agent MUST follow these rules during project init and subsequent development:
+
+- **Independent Core encapsulation** — Each selected option has an independent module under `core/` (e.g., `core/http/axios.ts`, `core/http/fetch.ts`)
+- **Unified external interface** — Expose a unified interface via `core/http/index.ts`; business modules depend only on the interface, not on concrete implementations
+- **Scenario-based routing** — The encapsulation layer automatically selects the most suitable underlying option based on request characteristics (e.g., upload/download → Axios; SSE/streaming → fetch)
+- **ADR record** — Multi-select decisions MUST be recorded as an ADR, explaining each option's responsibilities and routing rules
+- **No direct business-layer access** — Business modules MUST NOT directly import axios or fetch; they must go through the Core encapsulation interface
+
+#### Typical Multi-Select Viable Layers
+
+| Layer | Multi-select combo | Complementary rationale | Encapsulation strategy |
+|-------|-------------------|------------------------|------------------------|
+| Frontend-HTTP Client | Axios + native fetch | Axios: interceptors, upload/download progress, timeout; fetch: SSE, streaming, Service Worker | Core unified `request()` interface, auto-routes by Content-Type and scenario |
+| Frontend-Test Framework | Vitest + Playwright | Vitest: unit/component tests; Playwright: cross-browser E2E | Independent configs, no interference |
+| Frontend-CSS | TailwindCSS + CSS Modules | TailwindCSS: atomic rapid layout; CSS Modules: component-level isolation | Primary = TailwindCSS; CSS Modules for specific components |
+| Backend-API Style | RESTful + gRPC | RESTful: frontend-friendly external API; gRPC: high-perf internal microservice comms | External gateway exposes RESTful; internal services use gRPC |
+| Backend-Cache | Redis + in-process cache | Redis: distributed shared cache; in-process: single-node high-freq reads | Two-tier cache: check in-process first, then Redis, then DB |
+| Backend-File Storage | S3/OSS + local storage | Cloud: persistence and CDN; local: temp files and cache | Tiered storage, routed by file type |
+| Backend-Auth | JWT + Session | JWT: stateless API auth; Session: forced logout for traditional web | Dual auth channels, distinguished by route |
+
+#### Typical Mutually Exclusive Layers (no multi-select)
+
+| Layer | Exclusivity rationale |
+|-------|----------------------|
+| Frontend-Main Framework | Vue/React/Svelte runtimes are mutually exclusive, cannot coexist |
+| Frontend-Language | TypeScript is a superset of JavaScript; pick one |
+| Frontend-UI Library | Mixing multiple UI libraries causes style conflicts and bundle bloat |
+| Frontend-State Management | Multiple state management solutions cause data-flow confusion |
+| Frontend-Router | Multiple routing systems conflict |
+| Backend-Main Language | A backend service uses only one main language |
+| Backend-Framework | A service cannot run Spring Boot and NestJS simultaneously |
+| Backend-Database (primary) | Only one primary database; auxiliary stores (Redis/ES) don't count as multi-select |
+| Backend-ORM | Multiple ORMs on the same DB cause data-model confusion |
+
+#### Evaluation Result Presentation Spec
+
+The AI Agent MUST label the evaluation conclusion in the header or option description when presenting candidates:
+
+```
+# Multi-select viable layer
+ask_followup_question({
+  questions: [{
+    question: "Frontend-HTTP Client? (multi-select viable: Axios excels at progress monitoring, fetch at SSE/streaming; Core layer auto-routes by scenario when multi-selected)",
+    header: "Frontend-HTTP Client",
+    multiSelect: true,
+    options: [
+      "Axios (recommended: interceptors, upload/download progress, timeout)",
+      "Wrapped native fetch (recommended: SSE, streaming, zero deps)",
+      "TanStack Query (data caching and sync)"
+    ]
+  }]
+})
+
+# Mutually exclusive layer
+ask_followup_question({
+  questions: [{
+    question: "Frontend-Main Framework? (mutually exclusive, single-select only: Vue/React/Svelte runtimes cannot coexist)",
+    header: "Frontend-Main Framework",
+    multiSelect: false,
+    options: [...]
+  }]
+})
+```
+
+**Key principle:** Multi-select is not the default behavior — it is a recommendation after AI Agent evaluation. The final decision to multi-select belongs to the user. Even if the AI evaluates "multi-select viable," the user may still select only one.
 
 ### Interactive Selection Principle (mandatory)
 
@@ -117,6 +201,7 @@ Technology choices must weigh:
 - Selection has three phases: Phase 1 selects core cross-stack items (main framework/language/database/deployment), Phase 2 shows all frontend layer candidates based on Phase 1 results, Phase 3 shows all backend layer candidates
 - **Frontend and backend selection MUST be separated**: complete all frontend layers first, then select all backend layers; mixing frontend and backend layers in the same batch of questions is forbidden
 - **All question headers MUST include a "Frontend-" or "Backend-" prefix** (except Phase 1 global decisions), to avoid user confusion
+- **Multi-select compatibility evaluation (mandatory)**: before presenting candidates at each layer, the AI Agent MUST evaluate per "Protocol 0.5" whether the layer is suitable for multi-select; "multi-select viable" layers use `multiSelect: true`, "mutually exclusive" layers use `multiSelect: false`
 - Companion plugins are presented as **multi-select checkboxes** for the user to pick as needed
 - Each option is labeled "recommended" with a one-sentence explanation to reduce decision cost
 
@@ -138,9 +223,9 @@ Technology choices must weigh:
 
 ---
 
-## 2. Frontend Tech Selection — Layered Exclusive Flow
+## 2. Frontend Tech Selection — Layered Flow (default single-select; AI-evaluated multi-select allowed)
 
-> **Mandatory rule:** Frontend selection MUST complete all layers in Phase 2 before entering Phase 3 backend selection. Mixing frontend and backend layers in the same batch is forbidden.
+> **Mandatory rule:** Frontend selection MUST complete all layers in Phase 2 before entering Phase 3 backend selection. Mixing frontend and backend layers in the same batch is forbidden. Each layer defaults to single-select; the AI Agent MUST evaluate per "Protocol 0.5" whether the layer is suitable for multi-select.
 
 ### Selection Flow
 
@@ -154,11 +239,11 @@ Layer 7: Frontend-State Mgmt      →  Layer 8: Frontend-Router       →  Layer
 Layer 10: Frontend-Test Framework →  Layer 11: Frontend-Code Quality →  Layer 12: Frontend-i18n (optional)
 ```
 
-**Rule:** start at Layer 1, pick one per layer; earlier choices shape later recommendations.
+**Rule:** start at Layer 1; earlier choices shape later recommendations. Each layer defaults to single-select; the AI Agent MAY open multi-select after evaluating per "Protocol 0.5 Multi-Select Compatibility Evaluation."
 
 ---
 
-### Layer 1: Main Framework (pick one)
+### Layer 1: Main Framework (mutually exclusive, single-select only)
 
 | Option | Traits | Best for |
 |--------|--------|----------|
@@ -168,13 +253,13 @@ Layer 10: Frontend-Test Framework →  Layer 11: Frontend-Code Quality →  Laye
 
 **Signals:** admin console / China team / fast delivery → lean Vue; large complex interactions / international → lean React; extreme performance / small team → lean Svelte.
 
-**Exclusivity:** exactly one main framework; locked once chosen.
+**Multi-select assessment:** ❌ Mutually exclusive — Vue/React/Svelte runtimes cannot coexist; single-select only.
 
 **Custom input:** other frameworks allowed (Solid, Qwik, Angular); the AI only raises compatibility warnings.
 
 ---
 
-### Layer 2: Language (pick one)
+### Layer 2: Language (mutually exclusive, single-select only)
 
 | Option | Traits | Best for |
 |--------|--------|----------|
@@ -185,7 +270,7 @@ Layer 10: Frontend-Test Framework →  Layer 11: Frontend-Code Quality →  Laye
 
 ---
 
-### Layer 3: Build Tool (pick one)
+### Layer 3: Build Tool (mutually exclusive, single-select only)
 
 | Option | Traits | Best for |
 |--------|--------|----------|
@@ -227,11 +312,11 @@ Layer 10: Frontend-Test Framework →  Layer 11: Frontend-Code Quality →  Laye
 
 **Signals:** China enterprise admin → Element Plus / Ant Design; international or heavy customization → shadcn/ui family; Material design system → MUI.
 
-**Exclusivity:** exactly one UI component library.
+**Multi-select assessment:** ❌ Mutually exclusive — mixing multiple UI libraries causes style conflicts and bundle bloat; single-select only.
 
 ---
 
-### Layer 5: CSS Approach (pick one)
+### Layer 5: CSS Approach (multi-select viable, combine strengths)
 
 | Option | Traits | Best for |
 |--------|--------|----------|
@@ -241,21 +326,36 @@ Layer 10: Frontend-Test Framework →  Layer 11: Frontend-Code Quality →  Laye
 
 **Signals:** default TailwindCSS; before picking a specific CSS-in-JS library, verify its maintenance status per protocols 0.1/0.3 (some libraries have entered maintenance mode).
 
-**Exclusivity:** one primary CSS approach (minor mixing allowed, but declare the primary).
+**Multi-select assessment:** ✅ Viable — TailwindCSS (atomic rapid layout) + CSS Modules (component-level isolation) don't conflict and can combine. When multi-selected, declare the primary in the Core layer; the other is used only for specific scenarios. `multiSelect: true`
 
 ---
 
-### Layer 6: HTTP Client (pick one)
+### Layer 6: HTTP Client (multi-select viable, combine strengths)
 
 | Option | Traits | Best for |
 |--------|--------|----------|
-| Axios | Interceptors, request/response transforms, largest community | All projects (general default) |
+| Axios | Interceptors, request/response transforms, upload/download progress monitoring, timeout control, largest community | All projects (general default) |
 | TanStack Query | Integrated fetching/caching/sync, auto-retry | Data-driven apps needing cache strategies |
-| Wrapped native fetch | Zero deps, full control, lightweight | Minimal projects, special request needs |
+| Wrapped native fetch | Zero deps, full control, lightweight, SSE/streaming-friendly, Service Worker integration | Minimal projects, special request needs |
 
-**Exclusivity:** one primary HTTP approach.
+**Multi-select assessment:** ✅ Viable — Axios and native fetch don't conflict; each has irreplaceable strengths:
+- **Axios excels at:** upload/download progress monitoring, request/response interceptors, auto JSON transforms, timeout control, request cancellation
+- **fetch excels at:** SSE (Server-Sent Events), streaming responses (ReadableStream), Service Worker integration, zero deps
+- **TanStack Query** can combine with either, handling the data caching and sync layer
 
-**Pairing tip:** Axios + TanStack Query can combine (Axios as transport, Query managing data state); when combined, record TanStack Query as the primary.
+**Mandatory encapsulation spec for multi-select:**
+```
+core/http/
+├── axios.ts          # Axios wrapper: interceptors, progress, timeout
+├── fetch.ts          # fetch wrapper: SSE, streaming, Service Worker
+├── query.ts          # TanStack Query config (if selected)
+└── index.ts          # Unified external interface, auto-routes by scenario
+```
+- Business modules call only the unified interface exposed by `core/http`; never directly import axios or fetch
+- The encapsulation layer auto-routes by request characteristics: upload/download → Axios; SSE/streaming → fetch; normal → default
+- Multi-select decisions MUST be recorded as an ADR explaining each option's responsibilities and routing rules
+
+**Single-select:** pick one as the primary. `multiSelect: true`
 
 ---
 
@@ -287,7 +387,7 @@ Layer 10: Frontend-Test Framework →  Layer 11: Frontend-Code Quality →  Laye
 
 **Signals:** Vue → Pinia is near-uncontested; React small/mid → Zustand; large / multi-dev complex state → Redux Toolkit.
 
-**Exclusivity:** exactly one state management solution.
+**Multi-select assessment:** ❌ Mutually exclusive — multiple state management solutions cause data-flow confusion; single-select only. (Note: local ref/reactive vs. global state store aren't multi-select — they're different levels of concern.)
 
 ---
 
@@ -317,7 +417,7 @@ Layer 10: Frontend-Test Framework →  Layer 11: Frontend-Code Quality →  Laye
 | svelte-spa-router | Lightweight SPA router | Pure SPA projects |
 | TanStack Router (Svelte) | Type-safe | Strongly-typed routing needs |
 
-**Exclusivity:** exactly one routing solution.
+**Multi-select assessment:** ❌ Mutually exclusive — multiple routing systems conflict; single-select only.
 
 ---
 
@@ -341,7 +441,7 @@ Layer 10: Frontend-Test Framework →  Layer 11: Frontend-Code Quality →  Laye
 | React Hook Form + Zod | Best React form performance + schema validation | React projects with complex forms | Standalone — choose when built-in is insufficient |
 | VeeValidate + Zod | Vue ecosystem form validation + schema validation | Vue projects with complex forms | Standalone — choose when built-in is insufficient |
 
-**Exclusivity:** exactly one form validation solution ("use built-in" counts as an option).
+**Multi-select assessment:** ✅ Viable — "Use UI library built-in validation" + "Zod (schema validation)" don't conflict. Built-in handles component-level immediate validation; Zod handles shared FE/BE schema and type inference. When multi-selected, Core layer wraps a unified validation interface. `multiSelect: true`
 
 **Interactive checkbox example:**
 ```
@@ -357,7 +457,7 @@ header: "Frontend-Form Validation"
 
 ---
 
-### Layer 10: Test Framework (pick one)
+### Layer 10: Test Framework (multi-select viable, unit + E2E combo)
 
 | Option | Traits | Best for |
 |--------|--------|----------|
@@ -365,9 +465,7 @@ header: "Frontend-Form Validation"
 | Jest | Most mature ecosystem, largest community, many legacy projects | Non-Vite projects, legacy projects |
 | Playwright | E2E testing, cross-browser, auto-waiting | E2E testing needs |
 
-**Exclusivity:** one unit-test framework; an E2E framework may coexist with it.
-
-**Tip:** Vitest (unit) + Playwright (E2E) is the current mainstream combo.
+**Multi-select assessment:** ✅ Viable — unit test framework (Vitest/Jest) and E2E framework (Playwright) have different responsibilities and can combine. Mainstream combo: Vitest (unit/component) + Playwright (E2E). But Vitest and Jest are mutually exclusive (both unit-test frameworks; pick one). `multiSelect: true`
 
 ---
 
@@ -379,7 +477,7 @@ header: "Frontend-Form Validation"
 | Biome | Rust-based, very fast, lint + format in one | Speed-focused, new projects |
 | oxlint | Rust-based, ESLint-rule compatible | Large projects, performance-first |
 
-**Exclusivity:** one primary lint/format setup (ESLint + Prettier counts as one option).
+**Multi-select assessment:** ❌ Mutually exclusive — Lint/Format tool rules conflict; single-select only (ESLint + Prettier counts as one option).
 
 **Pairing tip:** TypeScript projects add `@typescript-eslint`; TailwindCSS projects add the official class-sorting plugin.
 
@@ -393,7 +491,7 @@ header: "Frontend-Form Validation"
 | react-intl | ICU MessageFormat, React ecosystem standard | React projects |
 | i18next | Framework-agnostic, largest ecosystem | General, cross-framework |
 
-**Exclusivity:** exactly one i18n solution.
+**Multi-select assessment:** ❌ Mutually exclusive — multiple i18n solutions cause translation-key management chaos; single-select only.
 
 **Skip condition:** single-language projects may choose "not needed".
 
@@ -405,7 +503,7 @@ header: "Frontend-Form Validation"
 
 Mobile selection is independent of the frontend web flow. When the project type is classified as "Mini-program / Mobile," use the following layer-by-layer selection flow:
 
-#### Mobile Layer 1: Cross-Platform Framework (pick one)
+#### Mobile Layer 1: Cross-Platform Framework (mutually exclusive, single-select only)
 
 | Option | Traits | Best for |
 |--------|--------|----------|
@@ -445,21 +543,25 @@ Mobile selection is independent of the frontend web flow. When the project type 
 | Android Native | ViewModel + LiveData / Compose State | Jetpack components |
 | iOS Native | SwiftUI @State / Combine | Built into SwiftUI |
 
-#### Mobile Layer 5: HTTP Client (pick one)
+#### Mobile Layer 5: HTTP Client (multi-select viable, combine strengths)
 
 | Option | Traits | Best for |
 |--------|--------|----------|
 | Framework built-in request | UniApp uni.request / Flutter http / RN fetch | Default, zero extra deps |
-| Axios | Interceptors, large community | JS/TS projects (UniApp/RN) |
-| Dio | Most popular Flutter HTTP client | Flutter projects |
+| Axios | Interceptors, upload/download progress monitoring, large community | JS/TS projects (UniApp/RN) |
+| Dio | Most popular Flutter HTTP client, interceptors, progress monitoring | Flutter projects |
 
-#### Mobile Layer 6: Local Storage (pick one)
+**Multi-select assessment:** ✅ Viable — built-in request + Axios (or Dio) don't conflict. Built-in handles simple scenarios; Axios/Dio handles complex scenarios needing interceptors and progress monitoring. Core layer wraps unified interface when multi-selected. `multiSelect: true`
+
+#### Mobile Layer 6: Local Storage (multi-select viable, tiered storage)
 
 | Option | Traits | Best for |
 |--------|--------|----------|
 | Framework built-in storage | UniApp uni.setStorage / Flutter shared_preferences / RN AsyncStorage | Default |
 | Local database | SQLite / Realm / WatermelonDB | Offline data, large local data |
 | MMKV | High-performance KV storage | High-performance KV needs |
+
+**Multi-select assessment:** ✅ Viable — built-in storage (simple KV) + local database (structured data) + MMKV (high-perf KV) don't conflict; can be used in tiers. Core layer wraps a unified storage interface, routing by data type when multi-selected. `multiSelect: true`
 
 #### Mobile Layer 7: Test Framework (recommend per framework)
 
@@ -742,9 +844,9 @@ AI: Frontend-UI Library locked: Arco Design. Moving to Frontend-CSS Approach...
 
 ---
 
-## 3. Backend Tech Selection — Layered Exclusive Flow
+## 3. Backend Tech Selection — Layered Flow (default single-select; AI-evaluated multi-select allowed)
 
-> **Mandatory rule:** Backend selection takes place in Phase 3 and MUST only start after all frontend selection is complete. Mixing with frontend layers in the same batch is forbidden.
+> **Mandatory rule:** Backend selection takes place in Phase 3 and MUST only start after all frontend selection is complete. Mixing with frontend layers in the same batch is forbidden. Each layer defaults to single-select; the AI Agent MUST evaluate per "Protocol 0.5" whether the layer is suitable for multi-select.
 
 ### Selection Flow
 
@@ -758,11 +860,11 @@ Layer 7: Backend-Message Queue   →  Layer 8: Backend-Auth        →  Layer 9:
 Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 12: Backend-Scheduling (optional)
 ```
 
-**Rule:** start at Layer 1, pick one per layer; earlier choices shape later recommendations.
+**Rule:** start at Layer 1; earlier choices shape later recommendations. Each layer defaults to single-select; the AI Agent MAY open multi-select after evaluating per "Protocol 0.5 Multi-Select Compatibility Evaluation."
 
 ---
 
-### Layer 1: Main Language (pick one)
+### Layer 1: Main Language (mutually exclusive, single-select only)
 
 | Option | Traits | Best for |
 |--------|--------|----------|
@@ -773,7 +875,7 @@ Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 
 
 **Signals:** large enterprise systems / traditional enterprises in China → Java; isomorphic FE/BE / rapid iteration → Node.js; high concurrency / cloud-native / infra tooling → Go; AI/ML / data analysis / rapid prototyping → Python.
 
-**Exclusivity:** exactly one main language; locked once chosen. Always pick the current LTS (verify per protocol 0.1).
+**Multi-select assessment:** ❌ Mutually exclusive — a backend service uses only one main language; single-select only. Always pick the current LTS (verify per protocol 0.1).
 
 **Custom input:** other languages allowed (Rust, C#); the AI only raises compatibility warnings.
 
@@ -813,11 +915,11 @@ Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 
 | Django | Full-stack framework, admin panel, built-in ORM | Content management, full-stack projects |
 | Flask | Lightweight, flexible, rich ecosystem | Small projects, microservices |
 
-**Exclusivity:** exactly one backend framework.
+**Multi-select assessment:** ❌ Mutually exclusive — a service cannot run multiple backend frameworks simultaneously; single-select only.
 
 ---
 
-### Layer 3: API Style (pick one)
+### Layer 3: API Style (multi-select viable, external/internal split)
 
 | Option | Traits | Best for |
 |--------|--------|----------|
@@ -825,9 +927,9 @@ Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 
 | GraphQL | Flexible queries, fetch-on-demand, less over-fetching | Complex data queries, multi-client adaptation |
 | gRPC | High performance, Protobuf serialization, strongly typed | Internal microservice communication, high-performance scenarios |
 
-**Exclusivity:** one primary API style (RESTful + gRPC may coexist, but only one is primary).
+**Multi-select assessment:** ✅ Viable — RESTful (frontend-friendly external) + gRPC (high-perf internal microservice) don't conflict; a common combo in microservice architectures. When multi-selected, external gateway exposes RESTful, internal services use gRPC. Core layer wraps a unified API interface. `multiSelect: true`
 
-**Tip:** RESTful for external APIs; gRPC for internal microservice communication.
+**Single-select:** a pure monolith can pick RESTful only.
 
 ---
 
@@ -867,11 +969,11 @@ Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 
 
 **Signals:** China-based Java teams → MyBatis Plus; international Java teams → JPA; Node projects → Prisma first; Django projects → use built-in Django ORM; FastAPI projects → SQLAlchemy or Tortoise ORM.
 
-**Exclusivity:** exactly one ORM/data-access solution.
+**Multi-select assessment:** ⚠️ Context-dependent — multiple ORMs on the same DB cause data-model confusion (mutually exclusive); but "MyBatis Plus (complex SQL) + Spring Data JPA (simple CRUD)" or "Prisma (primary ORM) + raw SQL (complex queries)" can combine. Default single-select; multi-select only when the user explicitly needs a split of responsibilities. Core layer wraps a unified data-access interface when multi-selected. Default `multiSelect: false`
 
 ---
 
-### Layer 5: Database (pick one)
+### Layer 5: Database (primary mutually exclusive; auxiliary stores can multi-select)
 
 | Option | Traits | Best for |
 |--------|--------|----------|
@@ -879,13 +981,13 @@ Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 
 | PostgreSQL | Advanced queries, JSON support, extensible, GIS | Advanced queries, analytics, GIS |
 | MongoDB | Document-oriented, flexible schema, horizontal scaling | Document data, content management, rapid iteration |
 
-**Exclusivity:** one primary database (auxiliary stores like Redis/ES may accompany it, but only one primary).
+**Multi-select assessment:** ⚠️ Primary is mutually exclusive — only one primary database. But "RDBMS primary + MongoDB (document auxiliary) + ElasticSearch (search)" is a common combo, representing multi-select of auxiliary stores for different purposes. Primary DB selection uses `multiSelect: false`; auxiliary stores (Redis/ES/MongoDB) are selected separately in their own layers.
 
 **The AI Agent MUST justify every database choice.**
 
 ---
 
-### Layer 6: Cache (pick one)
+### Layer 6: Cache (multi-select viable, two-tier caching)
 
 | Option | Traits | Best for |
 |--------|--------|----------|
@@ -893,11 +995,11 @@ Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 
 | Memcached | Pure in-memory cache, minimal, high performance | Pure caching, minimal needs |
 | In-process cache (e.g., Caffeine) | Zero network overhead, lowest latency | Single-node caching, read-heavy |
 
-**Exclusivity:** one primary cache (Redis + in-process cache may combine, but only one primary).
+**Multi-select assessment:** ✅ Viable — Redis (distributed shared cache) + in-process cache (single-node high-freq reads) don't conflict; a common two-tier cache strategy. When multi-selected, Core layer wraps a two-tier cache interface: check in-process first, then Redis, then fall back to DB. `multiSelect: true`
 
 ---
 
-### Layer 7: Message Queue (pick one)
+### Layer 7: Message Queue (multi-select viable, scenario-based split)
 
 | Option | Traits | Best for |
 |--------|--------|----------|
@@ -905,13 +1007,13 @@ Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 
 | Kafka | High throughput, log streaming, distributed | Log streams, big data, high throughput |
 | Redis Streams | No extra components, lightweight, reuses Redis | Small projects, simple messaging |
 
-**Exclusivity:** exactly one message queue.
+**Multi-select assessment:** ✅ Viable — RabbitMQ (business messaging, flexible routing) + Kafka (log streaming/big data, high throughput) don't conflict; each handles different scenarios. When multi-selected, Core layer wraps a unified messaging interface, routing by message type. `multiSelect: true`
 
-**Tip:** Redis Streams suffices for small projects; RabbitMQ for mid-to-large; Kafka for logging/big data.
+**Single-select:** Redis Streams suffices for small projects; RabbitMQ for mid-to-large; Kafka for logging/big data.
 
 ---
 
-### Layer 8: Authentication (pick one)
+### Layer 8: Authentication (multi-select viable, dual auth channels)
 
 > **Capability coverage note:** The following backend frameworks have built-in auth integration — prefer the framework's built-in solution:
 > - **NestJS** — `@nestjs/passport` integrates Passport strategies; recommend using it rather than a standalone solution
@@ -924,9 +1026,9 @@ Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 
 | OAuth2 / OIDC | Third-party auth standard, SSO, social login | SSO, third-party login, enterprise auth | Spring Security OAuth2 |
 | Session + Cookie | Traditional, server-controlled, forced logout possible | Traditional web apps, SSR | Django Auth built-in |
 
-**Exclusivity:** one primary auth scheme.
+**Multi-select assessment:** ✅ Viable — JWT (stateless API auth) + Session (forced logout for traditional web) + OAuth2 (third-party login) don't conflict; auth method can be distinguished by route. When multi-selected, Core layer wraps a unified auth interface, auto-selecting the auth strategy by request route. `multiSelect: true`
 
-**Tip:** JWT for decoupled FE/BE; OAuth2/OIDC for SSO or social login; Session for traditional SSR. NestJS projects: recommend `@nestjs/passport` + JWT strategy.
+**Single-select:** JWT for decoupled FE/BE; OAuth2/OIDC for SSO or social login; Session for traditional SSR. NestJS projects: recommend `@nestjs/passport` + JWT strategy.
 
 ---
 
@@ -969,7 +1071,7 @@ Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 
 | structlog | Structured logs, JSON output | Structured logging needs | Standalone |
 | Framework built-in logging | Django logging / Uvicorn logging | Small projects | Built into Django/FastAPI, skippable for simple scenarios |
 
-**Exclusivity:** exactly one logging system.
+**Multi-select assessment:** ❌ Mutually exclusive — multiple logging systems cause log format and output conflicts; single-select only. (Note: SLF4J is an interface standard; its implementations like Logback/Log4j2 are still mutually exclusive.)
 
 ---
 
@@ -1007,11 +1109,11 @@ Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 
 | Unittest | Stdlib built-in, zero deps | Simple projects, stdlib preference |
 | Robot Framework | Keyword-driven, BDD style | BDD-style preference |
 
-**Exclusivity:** exactly one test framework.
+**Multi-select assessment:** ⚠️ Context-dependent — same-type unit test frameworks are mutually exclusive (e.g., Jest vs. Vitest, pick one); but "unit test framework + E2E/integration test framework" can combine (e.g., JUnit 5 + RestAssured, Pytest + Behave). Default single-select; multi-select only when layered testing is needed. Default `multiSelect: false`
 
 ---
 
-### Layer 11: File Storage (optional, skippable)
+### Layer 11: File Storage (multi-select viable, tiered storage)
 
 | Option | Traits | Best for |
 |--------|--------|----------|
@@ -1019,11 +1121,11 @@ Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 
 | MinIO | S3-compatible, self-hosted object storage, open-source & free | Private deployment, intranet projects, cost-sensitive |
 | Local filesystem | Zero deps, simplest, no network overhead | Single-node deployment, small projects, intranet tools |
 
-**Exclusivity:** one primary storage solution (local + cloud tiering allowed, but one primary).
+**Multi-select assessment:** ✅ Viable — S3/OSS (persistence and CDN) + local storage (temp files and cache) don't conflict; a common tiered storage combo. When multi-selected, Core layer wraps a unified storage interface, routing by file type and purpose: persistent files → cloud; temp files → local. `multiSelect: true`
 
 **Skip condition:** pure API projects with no file-upload needs may choose "not needed".
 
-**Pairing tip:** S3/OSS + local cache is a common combo; MinIO works well as a dev-environment S3 substitute.
+**Single-select:** S3/OSS + local cache is a common combo; MinIO works well as a dev-environment S3 substitute.
 
 ---
 
@@ -1065,7 +1167,7 @@ Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 
 | APScheduler | Lightweight scheduled jobs, cron expressions | Single-node scheduled jobs | Standalone |
 | Django cron | Django built-in scheduled jobs | Django projects, simple scenarios | Optional built-in for Django |
 
-**Exclusivity:** exactly one scheduling solution.
+**Multi-select assessment:** ⚠️ Context-dependent — same-type scheduling solutions are mutually exclusive (e.g., XXL-Job vs. Quartz, pick one); but "framework built-in (simple single-node) + distributed scheduler (complex scenarios)" can combine. Default single-select; multi-select only when simple tasks and complex distributed tasks coexist. Default `multiSelect: false`
 
 **Skip condition:** projects without scheduled jobs may choose "not needed".
 
@@ -1235,7 +1337,7 @@ AI: Backend-Framework locked: Hono. Moving to Backend-API Style...
 
 These choices are not frontend/backend-specific — they are project-wide architectural concerns. After completing frontend and backend selection, the AI Agent should guide the user through:
 
-### CI/CD (pick one)
+### CI/CD (mutually exclusive, single-select only)
 
 | Option | Traits | Best for |
 |--------|--------|----------|
@@ -1245,11 +1347,11 @@ These choices are not frontend/backend-specific — they are project-wide archit
 
 **Signals:** follow the code-hosting platform; for self-hosted Gitea etc., evaluate its built-in CI or Jenkins.
 
-**Exclusivity:** one primary CI/CD solution.
+**Multi-select assessment:** ❌ Mutually exclusive — CI/CD main pipeline can only have one to avoid flow conflicts; single-select only.
 
 ---
 
-### Error Monitoring / APM (pick one)
+### Error Monitoring / APM (context-dependent)
 
 | Option | Traits | Best for |
 |--------|--------|----------|
@@ -1259,7 +1361,7 @@ These choices are not frontend/backend-specific — they are project-wide archit
 
 **Signals:** limited budget / private deployment → self-hosted Sentry or SkyWalking; enterprise all-in-one monitoring → Datadog.
 
-**Exclusivity:** one primary error-monitoring/APM solution.
+**Multi-select assessment:** ⚠️ Context-dependent — same-type APM is mutually exclusive (e.g., Sentry vs. Datadog, pick one); but "error monitoring (Sentry) + metrics monitoring (Prometheus+Grafana) + log collection (ELK/Loki)" don't conflict — they're different monitoring dimensions and can combine. Error monitoring main solution is single-select; other dimensions are selected separately in universal recommendations. Default `multiSelect: false`
 
 **Pairing tip:** error monitoring + Prometheus + Grafana (metrics) is a common open-source combo.
 
