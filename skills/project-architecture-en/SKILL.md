@@ -170,7 +170,7 @@ In Product mode, this phase outputs a **domain-model sketch + core user flows** 
 
 # 7. Tech Selection Overview
 
-Tech selection uses **single-step conversational confirmation + fresh research after every choice + capability awareness + immediate linked recommendations + multi-select compatibility evaluation**. Each turn asks exactly one selection question through `ask_followup_question`. After the user confirms it, the AI Agent MUST use all accumulated selections to research the current ecosystem, compatibility, and common companion solutions again through `web_search`, then generate 3-5 independent candidates for the next turn. It must not pre-generate later questions or copy document tables as final options. When a choice triggers a valuable companion framework, extension, or plugin, prioritize it as an independent follow-up candidate at the appropriate point; for example, after Pinia is selected, dynamically evaluate and recommend `pinia-plugin-persistedstate`. **Each layer defaults to single-select, but the AI Agent MUST evaluate multi-select viability per Protocol 0.5. Every optional layer or companion choice MUST include a `None` option, and the user always has the final say.**
+Tech selection uses **single-step conversational confirmation + fresh research after every choice + capability awareness + dual-trigger companion recommendations + multi-select compatibility evaluation**. Each turn asks exactly one selection question through `ask_followup_question`. After the user confirms it, the AI Agent MUST use all accumulated selections to research the current ecosystem, compatibility, and common companion solutions again through `web_search`, then generate 3-5 independent candidates for the next turn. It must not pre-generate later questions or copy document tables as final options. Companion recommendations have two mandatory trigger points: first, immediately after a technology is selected, evaluate valuable extensions, such as dynamically recommending `pinia-plugin-persistedstate` after Pinia is selected; second, after all foundational frontend or backend layers are complete, perform a wrap-up recommendation of approximately five companion plugins or tools based on that side's complete technology stack. The phase MUST NOT transition until the user confirms all wrap-up recommendations. **Each layer defaults to single-select, but the AI Agent MUST evaluate multi-select viability per Protocol 0.5. Every optional layer or companion choice MUST include a `None` option, and the user always has the final say.**
 
 ## 7.0 Multi-Select Compatibility Evaluation Protocol (mandatory, highest priority)
 
@@ -240,9 +240,9 @@ Incorrect examples: `"State Management"`, `"Cache"`, `"UI Library"`, `"ORM/Data 
 
 **Frontend and backend layer-by-layer selection MUST be done in separate phases. Mixing frontend and backend layers in the same turn is forbidden.**
 
-- All frontend layers must be fully selected before starting backend selection
+- All foundational frontend layers and the frontend wrap-up companion recommendations MUST be completed before backend selection begins
 - Each turn may only belong to one side (all frontend or all backend) and may contain exactly one question
-- After frontend selection is complete, explicitly inform the user: "Frontend tech stack confirmed. Now entering backend tech selection," then begin backend selection
+- After the foundational frontend layers are complete, the AI Agent MUST first complete the `Frontend-Companion Plugin Recommendations` wrap-up. Only after the user confirms every wrap-up question may the AI Agent explicitly state: "Frontend tech stack and companion plugins confirmed. Now entering backend tech selection," and begin backend selection
 
 ### Four-Phase Selection (one question per turn within each phase)
 
@@ -277,15 +277,22 @@ After every frontend choice, immediately execute this linkage loop:
 
 For example, after Pinia is selected, do not immediately continue to a pre-scripted router question. First research the current Pinia extension ecosystem and compatibility, then the AI may ask one `Frontend-Pinia Companion Plugins` multi-select question containing live-verified options such as `pinia-plugin-persistedstate` and `None`.
 
-After all frontend layers are selected, explicitly inform the user:
+After all foundational frontend layers are complete, the AI Agent MUST perform a wrap-up companion recommendation:
 
-> Frontend tech stack confirmed. Now entering backend tech selection.
+1. Run a fresh `web_search` using the complete frontend selection; do not reuse search results from an earlier layer
+2. Dynamically select approximately five plugins or development tools that are compatible with all selected technologies and provide clear value to the current project; recommend fewer than five when there are not enough high-value candidates
+3. Present every plugin or tool as an independent option; never bundle multiple plugins into one option
+4. Present them through a `Frontend-Companion Plugin Recommendations` question with `multiSelect: true` and include `None (not needed)`
+5. If the interaction tool's per-question candidate limit cannot accommodate approximately five plugins plus `None`, split the recommendations by responsibility, such as runtime/build integration and developer experience, into two consecutive wrap-up questions. Both questions remain part of Phase 2
+6. Only after all wrap-up questions are confirmed, explicitly inform the user:
+
+> Frontend tech stack and companion plugins confirmed. Now entering backend tech selection.
 
 ### Phase 3: Backend Layer-by-Layer Extended Selection (backend only, linked checkbox)
 
 Based on the Phase 1 backend runtime and development-language choices, present compatible backend candidates **layer by layer**, with each layer requiring user selection. **All questions in this phase contain only backend layers — frontend layers are forbidden.**
 
-The backend follows the same `one choice → fresh research → one question` loop. For example, after NestJS is selected, the AI Agent must research the current NestJS ecosystem, project needs, and selected auth/API/deployment choices before deciding whether the next question is a normal layer or a companion-plugin question involving options such as `@nestjs/swagger` or `@nestjs/throttler`. Plugin candidates must never be hard-coded, and optional questions must include `None`.
+The backend follows the same `one choice → fresh research → one question` loop. For example, after NestJS is selected, the AI Agent must research the current NestJS ecosystem, project needs, and selected auth/API/deployment choices before deciding whether the next question is a normal layer or a companion-plugin question involving options such as `@nestjs/swagger` or `@nestjs/throttler`. Plugin candidates must never be hard-coded, and optional questions must include `None`. After all foundational backend layers are complete, the AI Agent MUST perform a `Backend-Companion Plugin Recommendations` wrap-up of approximately five compatible plugins or tools using the same rules as the frontend wrap-up. The user must confirm all wrap-up questions before Phase 4 begins.
 
 **Key rules:**
 - Ask exactly one checkbox question per turn; framework or library choices normally generate 5-8 candidates dynamically, while plugin or extension choices normally generate 3-5
@@ -334,7 +341,7 @@ Common capability coverage relationships (full matrix in `references/tech-stack-
 
 ## 7.5 Selection Layers & Order (mandatory)
 
-**Phases are navigation only: Phase 1 (core selection) → Phase 2 (frontend layers) → Phase 3 (backend layers) → Phase 4 (cross-cutting concerns). Each phase must ask one question per turn; plugin or extension recommendations may be dynamically inserted after any confirmed choice. There is no fixed final recommendation phase.**
+**Phases are navigation only: Phase 1 (core selection) → Phase 2 (foundational frontend layers → frontend companion wrap-up) → Phase 3 (foundational backend layers → backend companion wrap-up) → Phase 4 (cross-cutting concerns). Each phase must ask one question per turn. Plugin or extension recommendations may be dynamically inserted after a confirmed choice and MUST also be presented as a wrap-up after each side's foundational layers are complete.**
 
 ### Phase 1: Core Selection (cross-stack, mixing allowed)
 

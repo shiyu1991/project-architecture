@@ -201,8 +201,8 @@ ask_followup_question({
 ### Interactive Selection Principle (mandatory)
 
 - The AI Agent **MUST use the `ask_followup_question` tool** to let users select via checkboxes — plain-text tables for verbal confirmation are forbidden
-- Selection has four navigation phases: Phase 1 core cross-stack items, Phase 2 frontend layers, Phase 3 backend layers, and Phase 4 cross-cutting concerns; plugin and extension recommendations are not fixed to the end and are dynamically inserted after each confirmed choice
-- **Frontend and backend selection MUST be separated**: complete all frontend layers first, then select all backend layers; mixing frontend and backend layers in the same turn is forbidden, and each turn may contain exactly one question
+- Selection has four navigation phases: Phase 1 core cross-stack items, Phase 2 frontend layers, Phase 3 backend layers, and Phase 4 cross-cutting concerns; plugins and extensions use dual-trigger recommendations: evaluate them after each confirmed choice and perform a mandatory wrap-up after each side's foundational layers
+- **Frontend and backend selection MUST be separated**: complete all foundational frontend layers and the frontend companion wrap-up first, then complete all foundational backend layers and the backend companion wrap-up; mixing frontend and backend layers in the same turn is forbidden, and each turn may contain exactly one question
 - **All question headers MUST include a "Frontend-" or "Backend-" prefix** (except Phase 1 global decisions), to avoid user confusion
 - **Multi-select compatibility evaluation (mandatory)**: before presenting candidates at each layer, the AI Agent MUST evaluate per "Protocol 0.5" whether the layer is suitable for multi-select; "multi-select viable" layers use `multiSelect: true`, "mutually exclusive" layers use `multiSelect: false`
 - Companion plugins are presented as **multi-select checkboxes** for the user to pick as needed
@@ -228,7 +228,7 @@ ask_followup_question({
 
 ## 2. Frontend Tech Selection — Layered Flow (default single-select; AI-evaluated multi-select allowed)
 
-> **Mandatory rule:** Frontend selection MUST complete all layers in Phase 2 before entering Phase 3 backend selection. Mixing frontend and backend layers in the same turn is forbidden. Each layer defaults to single-select; the AI Agent MUST evaluate per "Protocol 0.5" whether the layer is suitable for multi-select.
+> **Mandatory rule:** Frontend selection MUST complete all foundational layers and the `Frontend-Companion Plugin Recommendations` wrap-up in Phase 2 before entering Phase 3 backend selection. Mixing frontend and backend layers in the same turn is forbidden. Each layer defaults to single-select; the AI Agent MUST evaluate per "Protocol 0.5" whether the layer is suitable for multi-select.
 
 ### Selection Flow
 
@@ -242,7 +242,7 @@ Layer 7: Frontend-State Mgmt      →  Layer 8: Frontend-Router       →  Layer
 Layer 10: Frontend-Test Framework →  Layer 11: Frontend-Code Quality →  Layer 12: Frontend-i18n (optional)
 ```
 
-**Rule:** start at Layer 1; earlier choices shape later recommendations. Each layer defaults to single-select; the AI Agent MAY open multi-select after evaluating per "Protocol 0.5 Multi-Select Compatibility Evaluation."
+**Rule:** start at Layer 1; earlier choices shape later recommendations. Each layer defaults to single-select; the AI Agent MAY open multi-select after evaluating per "Protocol 0.5 Multi-Select Compatibility Evaluation." Completing Layer 12 does not directly start backend selection: first complete the `Frontend-Companion Plugin Recommendations` wrap-up, then end Phase 2 after user confirmation.
 
 ---
 
@@ -591,7 +591,7 @@ Mobile selection is independent of the frontend web flow. When the project type 
 
 ## 2.1 Linked Companion Plugin Recommendations
 
-After the user completes the technology-layer selections, the AI Agent uses the selected results to trigger companion-plugin recommendations. Every plugin must be shown as an independent option. Multiple selected technologies in the table are trigger conditions, not a selectable bundle, and no plugin may be pre-checked.
+Companion plugins use dual-trigger recommendations: after the user confirms a technology, the AI Agent may trigger an immediate local recommendation; after all foundational frontend layers are complete, it MUST perform a wrap-up using the complete frontend stack. The wrap-up dynamically selects approximately five plugins or development tools that are compatible with all selected technologies and provide clear value to the current project; recommend fewer than five when there are not enough high-value candidates. Every plugin must be shown as an independent option. Multiple selected technologies in the table are trigger conditions, not a selectable bundle, and no plugin may be pre-checked. Use `multiSelect: true` and include `None (not needed)`. If the interaction tool's per-question candidate limit cannot accommodate approximately five plugins plus `None`, split them by responsibility into two consecutive wrap-up questions; never remove `None`, bundle plugins, or drop key recommendations. Backend selection MUST NOT begin until all wrap-up questions are confirmed.
 
 ### Vue Ecosystem
 
@@ -850,7 +850,7 @@ AI: Frontend-UI Library locked: Arco Design. Moving to Frontend-CSS Approach...
 
 ## 3. Backend Tech Selection — Layered Flow (default single-select; AI-evaluated multi-select allowed)
 
-> **Mandatory rule:** Backend selection takes place in Phase 3 and MUST only start after all frontend selection is complete. Mixing with frontend layers in the same turn is forbidden. Each turn contains exactly one question. Each layer defaults to single-select; the AI Agent MUST evaluate per "Protocol 0.5" whether the layer is suitable for multi-select.
+> **Mandatory rule:** Backend selection takes place in Phase 3 and MUST only start after all foundational frontend layers and the `Frontend-Companion Plugin Recommendations` wrap-up are complete. Mixing with frontend layers in the same turn is forbidden. Each turn contains exactly one question. Each layer defaults to single-select; the AI Agent MUST evaluate per "Protocol 0.5" whether the layer is suitable for multi-select. After backend Layer 12, the AI Agent MUST complete the `Backend-Companion Plugin Recommendations` wrap-up before entering cross-cutting concerns.
 
 ### Selection Flow
 
@@ -864,7 +864,7 @@ Layer 7: Backend-Message Queue   →  Layer 8: Backend-Auth        →  Layer 9:
 Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 12: Backend-Scheduling (optional)
 ```
 
-**Rule:** start at Layer 1; earlier choices shape later recommendations. Each layer defaults to single-select; the AI Agent MAY open multi-select after evaluating per "Protocol 0.5 Multi-Select Compatibility Evaluation."
+**Rule:** start at Layer 1; earlier choices shape later recommendations. Each layer defaults to single-select; the AI Agent MAY open multi-select after evaluating per "Protocol 0.5 Multi-Select Compatibility Evaluation." Completing Layer 12 does not directly start cross-cutting selection: first complete the `Backend-Companion Plugin Recommendations` wrap-up, then end Phase 3 after user confirmation.
 
 ---
 
@@ -1194,7 +1194,7 @@ Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 
 
 ## 3.1 Linked Backend Plugin Recommendations
 
-After the user completes the backend-layer selections, the AI Agent recommends companion plugins from the selected results. Every plugin must be presented as an independent option. Multiple technologies in the table are trigger conditions, not fixed-bundle options, and no plugin may be pre-selected.
+Companion plugins use dual-trigger recommendations: after the user confirms a technology, the AI Agent may trigger an immediate local recommendation; after all foundational backend layers are complete, it MUST perform a wrap-up using the complete backend stack. The wrap-up dynamically selects approximately five plugins or development tools that are compatible with the project requirements, deployment model, and all selected technologies; recommend fewer than five when there are not enough high-value candidates. Every plugin must be presented as an independent option. Multiple technologies in the table are trigger conditions, not fixed-bundle options, and no plugin may be pre-selected. Use `multiSelect: true` and include `None (not needed)`. If the interaction tool's per-question candidate limit cannot accommodate approximately five plugins plus `None`, split them by responsibility into two consecutive wrap-up questions; never remove `None`, bundle plugins, or drop key recommendations. Cross-cutting selection MUST NOT begin until all wrap-up questions are confirmed.
 
 ### Java Ecosystem
 
