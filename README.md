@@ -30,15 +30,15 @@
 | 规模分级 | S/M/L 三级判定，小项目不套大架构，反过度工程 |
 | 交互式勾选选型 | 使用 `ask_followup_question` 工具让用户勾选技术栈，分三阶段：核心选择 + 前端全部层级 + 后端全部层级 |
 | 多选兼容评估 | 每层默认单选，AI 评估后可开放多选——不冲突的方案可组合使用（如 Axios + fetch），Core 层统一封装 |
-| 能力覆盖感知 | 自动检测已选框架自带能力（如 Element Plus 表单验证、Spring Boot 日志），跳过冗余层级，消除重复推荐 |
-| 分层联动推荐 | 选 A 自动推荐 B，前序选择自动筛选后序可选项，配套插件以多选勾选展示 |
+| 能力覆盖感知 | 自动检测已选框架自带能力，提供“使用内置”、独立方案或“无（暂不需要）”，不得静默跳过用户决策 |
+| 分层联动推荐 | 选 A 推荐 B，前序选择筛选后序候选；配套插件按需推荐并由用户确认 |
 | 兼容性矩阵 | 结构性绑定即时校验，版本级兼容实时查证 |
 | 动态调研 | 每层候选展示前执行 `web_search` 动态调研，文档表格仅为参考基线 |
 | 安全扫描 | SAST / 依赖漏洞 / 容器镜像 / DAST 多维度安全扫描推荐 |
 | Core + DDD 架构 | 前后端分离的 Core 结构、DDD 业务模块、复用红线 |
 | ADR 决策记录 | 重要决策留痕，AI 换会话不失忆 |
-| 6 阶段生命周期 | 理解 → 分析 → 设计 → 实现 → 验证 → 总结 |
-| 开箱模板 | `.agent/` 四件套、ADR 模板、README 模板，初始化即用 |
+| 分级生命周期 | S/M 低风险项目可裁剪流程；L 级或高风险项目执行完整六阶段及安全、发布门禁 |
+| 开箱模板 | 按项目级别生成 `.agent/` 文件、根目录 `docs/adr/`、ADR 模板和 README 模板 |
 
 ### 支持的 AI Agent
 
@@ -110,18 +110,18 @@ This Skill encodes a senior architect's working method as an enforceable protoco
 | Capability | Description |
 |-----------|-------------|
 | Three user modes | Fully-guided for beginners / business modeling for PMs / fast-track for developers |
-| Scale tiers | S/M/L classification — small projects never get big architectures |
-| Interactive checkbox selection | Uses `ask_followup_question` tool for users to check off tech choices; three phases: core selection + all frontend layers + all backend layers |
+| Scale tiers | S/M/L classification with risk-aware gates; small projects avoid big architectures and high-risk projects are not underestimated |
+| Interactive checkbox selection | Uses `ask_followup_question` for one decision at a time; next candidates are researched from accumulated context |
 | Multi-select compatibility evaluation | Each layer defaults to single-select; after AI evaluation, multi-select can be opened — non-conflicting options can combine (e.g., Axios + fetch), Core layer encapsulates each separately |
-| Capability awareness | Auto-detects built-in capabilities of chosen frameworks (e.g., Element Plus form validation, Spring Boot logging) and skips redundant layers — no duplicate recommendations |
-| Layered linkage recommendations | Choosing A auto-recommends B; earlier choices filter later options; companion plugins shown as multi-select checkboxes |
+| Capability awareness | Detects built-in capabilities and offers “use built-in,” standalone, or `None (not needed)`; never silently skips a user decision |
+| Layered linkage recommendations | Earlier choices filter later candidates; companion plugins are recommended as needed and confirmed by the user |
 | Compatibility matrices | Instant structural checks; version-level compatibility verified live |
 | Dynamic research | Mandatory `web_search` before presenting candidates at each layer; document tables are only a reference baseline |
 | Security scanning | SAST / dependency vulnerability / container image / DAST multi-dimensional security scanning recommendations |
 | Core + DDD architecture | Separate Core structures for FE & BE, DDD modules, reuse red lines |
 | ADR decision records | Decisions persist across AI sessions |
-| 6-phase lifecycle | Understand → Analyze → Design → Implement → Verify → Summarize |
-| Ready-to-use templates | `.agent/` four-file set, ADR template, README template |
+| Tiered lifecycle | Tier S/M low-risk projects may use a trimmed lifecycle; Tier L or high-risk projects use all six phases plus security and release gates |
+| Ready-to-use templates | Tier-appropriate `.agent/` files, root `docs/adr/`, ADR template, and README template |
 
 ### Supported AI Agents
 

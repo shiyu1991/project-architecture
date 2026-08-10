@@ -687,29 +687,29 @@ header: "前端-表单验证"
 
 | 已选框架 | 覆盖的层级 | 覆盖能力说明 | 默认策略 |
 |----------|-----------|-------------|----------|
-| **Element Plus** (Vue) | L9 表单验证 | `el-form` + `el-form-item` 内置验证规则 | 跳过 L9，标记"已覆盖" |
-| **Ant Design** (React) | L9 表单验证 | `Form` + `Form.Item` 内置验证规则 | 跳过 L9，标记"已覆盖" |
-| **Ant Design Vue** (Vue) | L9 表单验证 | 与 Ant Design 一致的表单验证 | 跳过 L9，标记"已覆盖" |
-| **Naive UI** (Vue) | L9 表单验证 | `n-form` 内置验证 | 跳过 L9，标记"已覆盖" |
-| **MUI** (React) | L9 表单验证 | `FormControl` + `TextField` 验证 | 跳过 L9，标记"已覆盖" |
-| **Vue Router** | L8 路由 | 官方路由方案 | 推荐"使用内置"，标注"已覆盖"，仍需用户确认 |
-| **React Router** | L8 路由 | React 生态标准路由 | 推荐"使用内置"，标注"已覆盖"，仍需用户确认 |
-| **Next.js** | L3 构建 + L8 路由 | 内置 Turbopack 构建 + App Router | 推荐"使用内置"，标注"已覆盖"，仍需用户确认 |
-| **SvelteKit** | L3 构建 + L8 路由 | 内置 Vite 构建 + 文件路由 | 推荐"使用内置"，标注"已覆盖"，仍需用户确认 |
-| **Nuxt** (Vue) | L3 构建 + L8 路由 | 内置 Vite 构建 + 文件路由 | 推荐"使用内置"，标注"已覆盖"，仍需用户确认 |
+| **Element Plus** (Vue) | L9 表单验证 | `el-form` + `el-form-item` 内置验证规则 | 推荐“使用内置”，仍需用户确认；复杂校验可选择独立方案 |
+| **Ant Design** (React) | L9 表单验证 | `Form` + `Form.Item` 内置验证规则 | 推荐“使用内置”，仍需用户确认；复杂校验可选择独立方案 |
+| **Ant Design Vue** (Vue) | L9 表单验证 | 与 Ant Design 一致的表单验证 | 推荐“使用内置”，仍需用户确认；复杂校验可选择独立方案 |
+| **Naive UI** (Vue) | L9 表单验证 | `n-form` 内置验证 | 推荐“使用内置”，仍需用户确认；复杂校验可选择独立方案 |
+| **MUI** (React) | L9 表单验证 | `FormControl` + `TextField` 验证 | 推荐“使用内置”，仍需用户确认；复杂校验可选择独立方案 |
+| **Vue Router** | L8 路由 | 官方路由方案 | 推荐“使用内置”，标注“已覆盖”，仍需用户确认 |
+| **React Router** | L8 路由 | React 生态标准路由 | 推荐“使用内置”，标注“已覆盖”，仍需用户确认 |
+| **Next.js** | L3 构建 + L8 路由 | 内置构建与 App Router | 推荐“使用内置”，标注“已覆盖”，仍需用户确认 |
+| **SvelteKit** | L3 构建 + L8 路由 | 内置 Vite 构建与文件路由 | 推荐“使用内置”，标注“已覆盖”，仍需用户确认 |
+| **Nuxt** (Vue) | L3 构建 + L8 路由 | 内置 Vite 构建与文件路由 | 推荐“使用内置”，标注“已覆盖”，仍需用户确认 |
 
 ### 后端框架能力覆盖
 
 | 已选框架 | 覆盖的层级 | 覆盖能力说明 | 默认策略 |
 |----------|-----------|-------------|----------|
-| **NestJS** | L8 认证 | `@nestjs/passport` 集成 Passport 策略 | 推荐 Passport 插件而非独立方案 |
-| **Spring Boot** | L8 认证 | Spring Security 生态 | 推荐 Spring Security 而非独立方案 |
-| **Spring Boot** | L9 日志 | Logback 内置 | 跳过 L9，标记"已覆盖" |
-| **Spring Boot** | L12 定时任务 | `@Scheduled` 内置 | 简单场景跳过 L12 |
-| **NestJS** | L12 定时任务 | `@nestjs/schedule` 内置 | 简单场景跳过 L12 |
-| **Django** (Python) | L4 ORM | Django ORM 内置 | 跳过 L4，标记"已覆盖" |
-| **Django** (Python) | L8 认证 | Django Auth 内置 | 跳过 L8，标记"已覆盖" |
-| **FastAPI** (Python) | L9 日志 | Uvicorn 日志集成 | 简单场景跳过 L9 |
+| **NestJS** | L8 认证 | `@nestjs/passport` 集成 Passport 策略 | 推荐框架插件，仍需用户确认 |
+| **Spring Boot** | L8 认证 | Spring Security 生态 | 推荐 Spring Security，仍需用户确认 |
+| **Spring Boot** | L9 日志 | Logback 集成 | 推荐“使用框架默认”，仍需用户确认是否需要独立日志方案 |
+| **Spring Boot** | L12 定时任务 | `@Scheduled` 内置 | 简单场景推荐“使用内置”；分布式场景选择独立调度方案；仍需用户确认 |
+| **NestJS** | L12 定时任务 | `@nestjs/schedule` 集成 | 简单场景推荐框架插件；分布式场景选择独立调度方案；仍需用户确认 |
+| **Django** (Python) | L4 ORM | Django ORM 内置 | 推荐“使用内置”；其他数据库类型需重新检查适配性；仍需用户确认 |
+| **Django** (Python) | L8 认证 | Django Auth 内置 | 推荐“使用内置”；复杂身份体系可选择独立方案；仍需用户确认 |
+| **FastAPI** (Python) | L9 日志 | Uvicorn 日志集成 | 简单场景推荐“使用框架默认”；仍需用户确认是否需要独立日志方案 |
 
 ### 能力覆盖决策流程
 
@@ -1290,11 +1290,11 @@ Layer 10: 后端-测试框架   →  Layer 11: 后端-文件存储   →  Layer 
 | **JPA/Hibernate** | ✅ | ✅ | ❌ |
 | **Prisma** | ✅ | ✅ | ✅ |
 | **TypeORM** | ✅ | ✅ | ✅ |
-| **Gorm** | ✅ | ✅ | ✅ |
+| **Gorm** | ✅ | ✅ | ❌ |
 | **sqlx** | ✅ | ✅ | ❌ |
-| **SQLAlchemy** | ✅ | ✅ | ✅ |
+| **SQLAlchemy** | ✅ | ✅ | ❌ |
 | **Django ORM** | ✅ | ✅ | ❌ |
-| **Tortoise ORM** | ✅ | ✅ | ✅ |
+| **Tortoise ORM** | ✅ | ✅ | ❌ |
 
 ### 主语言 × 测试框架
 

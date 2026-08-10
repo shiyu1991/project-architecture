@@ -687,29 +687,29 @@ Version compatibility evolves with the ecosystem; at selection time, consult the
 
 | Chosen framework | Covered layers | Coverage description | Default strategy |
 |------------------|---------------|---------------------|------------------|
-| **Element Plus** (Vue) | L9 Form validation | `el-form` + `el-form-item` built-in validation rules | Skip L9, mark "covered" |
-| **Ant Design** (React) | L9 Form validation | `Form` + `Form.Item` built-in validation rules | Skip L9, mark "covered" |
-| **Ant Design Vue** (Vue) | L9 Form validation | Consistent with Ant Design form validation | Skip L9, mark "covered" |
-| **Naive UI** (Vue) | L9 Form validation | `n-form` built-in validation | Skip L9, mark "covered" |
-| **MUI** (React) | L9 Form validation | `FormControl` + `TextField` validation | Skip L9, mark "covered" |
-| **Vue Router** | L8 Router | Official routing solution | Recommend "use built-in," label "covered," still require user confirmation |
-| **React Router** | L8 Router | React ecosystem standard router | Recommend "use built-in," label "covered," still require user confirmation |
-| **Next.js** | L3 Build + L8 Router | Built-in Turbopack build + App Router | Recommend "use built-in," label "covered," still require user confirmation |
-| **SvelteKit** | L3 Build + L8 Router | Built-in Vite build + file-based routing | Recommend "use built-in," label "covered," still require user confirmation |
-| **Nuxt** (Vue) | L3 Build + L8 Router | Built-in Vite build + file-based routing | Recommend "use built-in," label "covered," still require user confirmation |
+| **Element Plus** (Vue) | L9 Form validation | `el-form` + `el-form-item` built-in validation rules | Recommend “use built-in”; user confirmation required; standalone solution remains available for complex validation |
+| **Ant Design** (React) | L9 Form validation | `Form` + `Form.Item` built-in validation rules | Recommend “use built-in”; user confirmation required; standalone solution remains available for complex validation |
+| **Ant Design Vue** (Vue) | L9 Form validation | Consistent with Ant Design form validation | Recommend “use built-in”; user confirmation required; standalone solution remains available for complex validation |
+| **Naive UI** (Vue) | L9 Form validation | `n-form` built-in validation | Recommend “use built-in”; user confirmation required; standalone solution remains available for complex validation |
+| **MUI** (React) | L9 Form validation | `FormControl` + `TextField` validation | Recommend “use built-in”; user confirmation required; standalone solution remains available for complex validation |
+| **Vue Router** | L8 Router | Official routing solution | Recommend “use built-in,” label “covered,” user confirmation required |
+| **React Router** | L8 Router | React ecosystem standard router | Recommend “use built-in,” label “covered,” user confirmation required |
+| **Next.js** | L3 Build + L8 Router | Built-in build and App Router | Recommend “use built-in,” label “covered,” user confirmation required |
+| **SvelteKit** | L3 Build + L8 Router | Built-in Vite build and file-based routing | Recommend “use built-in,” label “covered,” user confirmation required |
+| **Nuxt** (Vue) | L3 Build + L8 Router | Built-in Vite build and file-based routing | Recommend “use built-in,” label “covered,” user confirmation required |
 
 ### Backend Framework Capability Coverage
 
 | Chosen framework | Covered layers | Coverage description | Default strategy |
 |------------------|---------------|---------------------|------------------|
-| **NestJS** | L8 Auth | `@nestjs/passport` integrates Passport strategies | Recommend Passport plugin rather than standalone |
-| **Spring Boot** | L8 Auth | Spring Security ecosystem | Recommend Spring Security rather than standalone |
-| **Spring Boot** | L9 Logging | Logback built-in | Skip L9, mark "covered" |
-| **Spring Boot** | L12 Scheduling | `@Scheduled` built-in | Skip L12 for simple scenarios |
-| **NestJS** | L12 Scheduling | `@nestjs/schedule` built-in | Skip L12 for simple scenarios |
-| **Django** (Python) | L4 ORM | Django ORM built-in | Skip L4, mark "covered" |
-| **Django** (Python) | L8 Auth | Django Auth built-in | Skip L8, mark "covered" |
-| **FastAPI** (Python) | L9 Logging | Uvicorn logging integration | Skip L9 for simple scenarios |
+| **NestJS** | L8 Auth | `@nestjs/passport` integrates Passport strategies | Recommend framework plugin; user confirmation required |
+| **Spring Boot** | L8 Auth | Spring Security ecosystem | Recommend Spring Security; user confirmation required |
+| **Spring Boot** | L9 Logging | Logback integration | Recommend “use framework default”; user confirmation required for standalone logging |
+| **Spring Boot** | L12 Scheduling | `@Scheduled` built-in | Recommend “use built-in” for simple cases; standalone scheduler for distributed cases; user confirmation required |
+| **NestJS** | L12 Scheduling | `@nestjs/schedule` integration | Recommend framework plugin for simple cases; standalone scheduler for distributed cases; user confirmation required |
+| **Django** (Python) | L4 ORM | Django ORM built-in | Recommend “use built-in”; recheck support for other database types; user confirmation required |
+| **Django** (Python) | L8 Auth | Django Auth built-in | Recommend “use built-in”; standalone identity solution remains available for complex identity needs; user confirmation required |
+| **FastAPI** (Python) | L9 Logging | Uvicorn logging integration | Recommend “use framework default” for simple cases; user confirmation required for standalone logging |
 
 ### Capability Coverage Decision Flow
 
@@ -1290,11 +1290,11 @@ Only **long-term stable ecosystem bindings** are marked here; verify version-lev
 | **JPA/Hibernate** | ✅ | ✅ | ❌ |
 | **Prisma** | ✅ | ✅ | ✅ |
 | **TypeORM** | ✅ | ✅ | ✅ |
-| **Gorm** | ✅ | ✅ | ✅ |
+| **Gorm** | ✅ | ✅ | ❌ |
 | **sqlx** | ✅ | ✅ | ❌ |
-| **SQLAlchemy** | ✅ | ✅ | ✅ |
+| **SQLAlchemy** | ✅ | ✅ | ❌ |
 | **Django ORM** | ✅ | ✅ | ❌ |
-| **Tortoise ORM** | ✅ | ✅ | ✅ |
+| **Tortoise ORM** | ✅ | ✅ | ❌ |
 
 ### Main Language × Test Framework
 

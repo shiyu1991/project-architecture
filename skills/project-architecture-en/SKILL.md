@@ -76,15 +76,17 @@ Detection signals:
 
 # 3. Scale Tiers (anti-over-engineering)
 
-**Not every project needs the full architecture.** Determine project scale BEFORE starting. Never force a big architecture onto a small project:
+**Not every project needs the full architecture.** Determine both project scale and risk before starting. Never force a big architecture onto a small project or underestimate a high-risk project:
 
-| Tier | Signals | Architecture strategy |
-|------|---------|----------------------|
-| S: script / prototype / one-off tool | single file suffices, no deployment, disposable | Just write it. No Core/modules/ADRs. Minimal README only. |
-| M: small app / personal project | 1-3 feature modules, solo dev, lifespan < 6 months | Simplified: `src/` + `README.md`, optional `.agent/context.md`, no ADRs |
-| L: real product / team collaboration | multiple modules, multiple contributors, long-term maintenance, deployment & ops | Full architecture: Core + DDD modules + ADR + 6-phase lifecycle |
+| Tier | Signals | Required artifacts and gates |
+|------|---------|------------------------------|
+| S: script / prototype / one-off tool | Single file suffices, no deployment, disposable, no sensitive data | Minimal `README.md`; verify startup/core behavior; use a trimmed Understand → Implement → Verify → Summarize lifecycle |
+| M: small app / personal project | 1–3 feature modules, solo developer, lifespan < 6 months | `README.md` + optional `.agent/context.md`; at least unit tests or core-flow verification; use the six-phase lifecycle |
+| L: real product / team collaboration | Multiple modules, multiple contributors, long-term maintenance, deployment and operations | Full `.agent/` four-file set + root `docs/adr/`; Core + business modules; full six-phase, CI, security, and release gates |
 
-**Default assumption is Tier M.** Upgrade to L only on clear signals (team collaboration, long-term maintenance, enterprise-grade, multiple developers). Never default to the full architecture.
+**Upgrade conditions:** Payment, identity/authentication, sensitive or regulated data, external users, 24/7 availability, disaster recovery, team collaboration, or long-term operation require at least L-level gates even when the project has a solo developer. Reassess whenever scale or risk changes.
+
+**Default assumption is M, low risk.** Upgrade architecture and gates only after user confirmation or when risk signals are clear; the AI Agent must show the classification and its implications before continuing.
 
 ---
 
@@ -126,22 +128,23 @@ Forbidden:
 
 # 5. Project Context Management
 
-The AI Agent MUST read the following first to build project awareness:
+The AI Agent must read existing context according to the project tier:
 
 ```
 .agent/
 ├── context.md          # Project positioning & business background
 ├── architecture.md     # Architecture decisions & structure
 ├── coding-rule.md      # Coding conventions
-├── workflow.md         # Development workflow
-└── docs/adr/           # Architecture Decision Records
+└── workflow.md         # Development workflow
+
+docs/adr/               # Architecture Decision Records (project root)
 ```
 
-Plus: `README.md`, the project directory tree, and dependency manifests (`package.json` / `pom.xml` / `go.mod` / `requirements.txt`).
+Plus: `README.md`, the project directory tree, and dependency manifests (`package.json` / `pom.xml` / `go.mod` / `requirements.txt`). Missing optional files must not block S/M projects.
 
 The AI must be clear about: project positioning, business goals, technical architecture, core modules, shared capabilities, technical constraints, deployment model, and potential risks.
 
-**When initializing a new project**: generate the `.agent/` four-file set and the README from `templates/`. Never write them from scratch.
+**When initializing a new project**: S projects use only the README template; M projects use the README and optionally `.agent/context.md`; L projects use `templates/` to generate the `.agent/` four-file set, root `docs/adr/`, and README. Never write these files from scratch or generate files beyond the project's tier.
 
 ---
 
@@ -405,9 +408,12 @@ Versions must be queried live (per references/tech-stack-guide.md protocol 0.1).
 
 **Follow-up actions:**
 1. User confirms the summary table
-2. Auto-fill `.agent/architecture.md` tech stack
-3. Generate ADR-001 recording the tech-stack decision
-4. Enter project initialization (generate directory structure, `.agent/` four-file set, README)
+2. Generate an initialization plan according to the project tier
+3. Create required directories and template files first (including `.agent/architecture.md`) from `templates/`
+4. Write confirmed technology choices, versions, reasons, and dates into the architecture documentation
+5. Generate ADR-001 only for Tier L or high-risk decisions, saved under root `docs/adr/`
+6. Install dependencies and run initialization acceptance: configuration, startup, test, and build checks
+7. Enter development only after acceptance passes; on failure, preserve diagnostics and resume from the failed step
 
 ## 7.5-C Selection Change Flow
 
@@ -472,14 +478,13 @@ Key rules (details in `references/architecture-design.md`):
 
 # 9. AI Development Lifecycle
 
-Every task MUST pass through 6 phases (details in `references/dev-lifecycle.md`):
+Project tasks MUST follow the lifecycle appropriate to their scale and risk:
 
-1. **Understand** — read docs, related modules, existing code
-2. **Analyze** — does the capability exist, can it be reused, what's impacted, is new architecture needed
-3. **Design** — output the list of files to modify/add/delete, impact scope, risks
-4. **Implement** — small-scope changes, match project style, no unrelated refactoring
-5. **Verify** — Lint → Type Check → Test → Build
-6. **Summarize** — what changed, why, impact scope, test results, follow-ups
+- **Tier S, low risk**: Understand → Implement → Verify → Summarize
+- **Tier M, low risk**: Understand → Analyze → Design → Implement → Verify → Summarize
+- **Tier L or any high-risk project**: full six phases plus security, release, and rollback gates
+
+See `references/dev-lifecycle.md` for details. Any trimmed phase MUST be explained in the summary; it must never be skipped silently.
 
 Git workflow (branching strategy, commit conventions): `references/dev-lifecycle.md` section 2.
 

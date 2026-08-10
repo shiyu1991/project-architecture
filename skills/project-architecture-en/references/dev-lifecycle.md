@@ -7,9 +7,13 @@
 
 ## 1. AI Development Lifecycle
 
-Every task must pass through all 6 phases:
+Project tasks MUST follow the lifecycle appropriate to their scale and risk:
 
-### Phase 1: Understand
+- **Tier S, low risk**: Understand → Implement → Verify → Summarize
+- **Tier M, low risk**: Understand → Analyze → Design → Implement → Verify → Summarize
+- **Tier L or any high-risk project**: full six phases plus security, release, and rollback gates
+
+Any trimmed phase MUST be explained in the summary; it must never be skipped silently.
 
 Read:
 - Project docs (README.md, .agent/context.md, .agent/architecture.md, .agent/coding-rule.md)
@@ -165,7 +169,7 @@ tests/
 | E2E tests | No mocks; use a full test environment |
 
 **Rules:**
-- Mocks are created at test boundaries — never侵入 business code
+- Mocks are created at test boundaries — they must never invade business code
 - Business code never hardcodes mock logic — testability is achieved via dependency injection
 - External API mocks use record-replay (e.g., Pact / MSW) to preserve real response structures
 
