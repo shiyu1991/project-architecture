@@ -65,9 +65,10 @@ The candidate tables in this document are a **reference baseline at the time of 
    - "emerging" (a rising new solution found via search)
    - "outdated" (no longer active legacy option, kept for reference only)
 
-**Research frequency:**
-- Each selection layer MUST execute a `web_search` before presenting candidates
-- Within the same session, the same layer is not researched twice (cache results)
+**Research frequency (mandatory):**
+- After every user-confirmed option, the AI Agent MUST execute a fresh `web_search` before asking the next question
+- Search context MUST include all selected technologies, project type, scale, constraints, and the option just confirmed
+- Do not reuse old results merely because the candidate belongs to the same layer; ecosystem, versions, and plugin compatibility must be reassessed for the current context
 - Research results are NOT written to the skill document — used only for the current selection session
 
 **Example:**
@@ -109,9 +110,10 @@ Technology choices must weigh:
 - Within each layer, **default is single-select**; however, the AI Agent MUST evaluate whether the layer is suitable for multi-select per "Protocol 0.5 Multi-Select Compatibility Evaluation"
 - If the evaluation concludes "multi-select viable and beneficial" (no conflict + complementary strengths), the layer is presented with `multiSelect: true`, letting the user decide whether to check multiple options
 - If the evaluation concludes "mutually exclusive" (multi-select causes conflict or no benefit), the layer stays `multiSelect: false`
-- Offer **Top 3 common candidates** per layer (tables in this document are a reference baseline at time of writing; the AI Agent MUST dynamically research and merge latest candidates per protocol 0.4 before presenting)
-- Users may **skip recommendations** and enter any custom option
-- The AI Agent only raises **compatibility warnings** for custom choices — never overrides them
+- Generate **3-5 independent candidates per turn** (the count is dynamic and depends on context and search results; a fixed Top 3 is not required)
+- Every optional layer, plugin, and extension question MUST include `None (not needed)`
+- Required capabilities must not use `None` as a substitute; when a framework provides the capability, offer `Use built-in capability` as an independent option
+- Users may skip recommendations and enter any custom option; the AI Agent only raises compatibility warnings and never overrides them
 
 ### 0.5 Multi-Select Compatibility Evaluation Protocol (mandatory)
 
@@ -158,7 +160,8 @@ When a layer is multi-selected by the user, the AI Agent MUST follow these rules
 | Frontend-UI Library | Mixing multiple UI libraries causes style conflicts and bundle bloat |
 | Frontend-State Management | Multiple state management solutions cause data-flow confusion |
 | Frontend-Router | Multiple routing systems conflict |
-| Backend-Main Language | A backend service uses only one main language |
+| Backend-Runtime | A backend service normally uses one primary runtime |
+| Backend-Language | A backend service chooses one primary development language |
 | Backend-Framework | A service cannot run Spring Boot and NestJS simultaneously |
 | Backend-Database (primary) | Only one primary database; auxiliary stores (Redis/ES) don't count as multi-select |
 | Backend-ORM | Multiple ORMs on the same DB cause data-model confusion |
@@ -198,8 +201,8 @@ ask_followup_question({
 ### Interactive Selection Principle (mandatory)
 
 - The AI Agent **MUST use the `ask_followup_question` tool** to let users select via checkboxes — plain-text tables for verbal confirmation are forbidden
-- Selection has three phases: Phase 1 selects core cross-stack items (main framework/language/database/deployment), Phase 2 shows all frontend layer candidates based on Phase 1 results, Phase 3 shows all backend layer candidates
-- **Frontend and backend selection MUST be separated**: complete all frontend layers first, then select all backend layers; mixing frontend and backend layers in the same batch of questions is forbidden
+- Selection has four navigation phases: Phase 1 core cross-stack items, Phase 2 frontend layers, Phase 3 backend layers, and Phase 4 cross-cutting concerns; plugin and extension recommendations are not fixed to the end and are dynamically inserted after each confirmed choice
+- **Frontend and backend selection MUST be separated**: complete all frontend layers first, then select all backend layers; mixing frontend and backend layers in the same turn is forbidden, and each turn may contain exactly one question
 - **All question headers MUST include a "Frontend-" or "Backend-" prefix** (except Phase 1 global decisions), to avoid user confusion
 - **Multi-select compatibility evaluation (mandatory)**: before presenting candidates at each layer, the AI Agent MUST evaluate per "Protocol 0.5" whether the layer is suitable for multi-select; "multi-select viable" layers use `multiSelect: true`, "mutually exclusive" layers use `multiSelect: false`
 - Companion plugins are presented as **multi-select checkboxes** for the user to pick as needed
@@ -212,7 +215,7 @@ ask_followup_question({
 - **Auto-locking is forbidden** for any layer (even if the framework ecosystem has only one mainstream option)
 - **Skipping layers is forbidden** — even if the chosen framework already covers that capability
 - Recommendations are only labeled "recommended" — they do not replace user selection
-- The user may say "auto-select the rest for me" at any time to authorize the AI to batch-select
+- The user may say "auto-select the rest for me" at any time to authorize the AI to select, but the AI must still explain and confirm each dynamic recommendation in sequence
 
 ### Capability Awareness Principle (mandatory)
 
@@ -225,7 +228,7 @@ ask_followup_question({
 
 ## 2. Frontend Tech Selection — Layered Flow (default single-select; AI-evaluated multi-select allowed)
 
-> **Mandatory rule:** Frontend selection MUST complete all layers in Phase 2 before entering Phase 3 backend selection. Mixing frontend and backend layers in the same batch is forbidden. Each layer defaults to single-select; the AI Agent MUST evaluate per "Protocol 0.5" whether the layer is suitable for multi-select.
+> **Mandatory rule:** Frontend selection MUST complete all layers in Phase 2 before entering Phase 3 backend selection. Mixing frontend and backend layers in the same turn is forbidden. Each layer defaults to single-select; the AI Agent MUST evaluate per "Protocol 0.5" whether the layer is suitable for multi-select.
 
 ### Selection Flow
 
@@ -423,7 +426,7 @@ core/http/
 
 ### Layer 9: Form Validation (may be covered by UI library)
 
-> **Capability coverage note:** The following UI libraries have built-in form validation. When selected, this layer is skipped by default:
+> **Capability coverage note:** The following UI libraries have built-in form validation. When selected, mark this layer as covered but do not skip it by default; ask the user to choose `use built-in`, a standalone solution, or `None (not needed)`:
 > - **Element Plus** — built-in `el-form` validation rules: required, length, custom validators
 > - **Ant Design** — built-in `Form` component validation with declarative rules
 > - **Naive UI** — built-in `n-form` validation with custom validators
@@ -438,8 +441,8 @@ core/http/
 |--------|--------|----------|----------------|
 | Use UI library built-in validation | Zero extra deps, deep integration with components | Most projects (default recommendation) | Element Plus / Ant Design / Naive UI already cover this |
 | Zod | Schema validation, TypeScript inference, framework-agnostic | Needs shared FE/BE schema, type inference | Standalone — choose when built-in is insufficient |
-| React Hook Form + Zod | Best React form performance + schema validation | React projects with complex forms | Standalone — choose when built-in is insufficient |
-| VeeValidate + Zod | Vue ecosystem form validation + schema validation | Vue projects with complex forms | Standalone — choose when built-in is insufficient |
+| React Hook Form | High-performance React form state management | React projects with complex forms | Independent option; may pair with Zod if the user selects it separately |
+| VeeValidate | Vue ecosystem form validation | Vue projects with complex forms | Independent option; may pair with Zod if the user selects it separately |
 
 **Multi-select assessment:** ✅ Viable — "Use UI library built-in validation" + "Zod (schema validation)" don't conflict. Built-in handles component-level immediate validation; Zod handles shared FE/BE schema and type inference. When multi-selected, Core layer wraps a unified validation interface. `multiSelect: true`
 
@@ -447,7 +450,7 @@ core/http/
 ```
 options: [
   "Use Element Plus built-in validation (recommended, already covered)",
-  "VeeValidate + Zod (choose when complex cross-form validation is needed)",
+  "VeeValidate (complex Vue form state management; may pair with separately selected Zod)",
   "Zod (schema validation only, shared FE/BE)"
 ],
 header: "Frontend-Form Validation"
@@ -473,11 +476,12 @@ header: "Frontend-Form Validation"
 
 | Option | Traits | Best for |
 |--------|--------|----------|
-| ESLint + Prettier | Industry standard, largest ecosystem, rich rules, great IDE integration | All projects (default) |
-| Biome | Rust-based, very fast, lint + format in one | Speed-focused, new projects |
+| ESLint | Industry-standard linting, largest ecosystem, rich rules, strong IDE integration | Projects needing a mature rule ecosystem |
+| Prettier | Dedicated formatting with consistent cross-language output | May pair with separately selected ESLint |
+| Biome | Rust-based, very fast, lint and format in one | Speed-focused, new projects |
 | oxlint | Rust-based, ESLint-rule compatible | Large projects, performance-first |
 
-**Multi-select assessment:** ❌ Mutually exclusive — Lint/Format tool rules conflict; single-select only (ESLint + Prettier counts as one option).
+**Multi-select assessment:** ⚠️ Conditionally multi-select — ESLint and Prettier have complementary responsibilities and may be selected separately; Biome normally conflicts with another primary lint/format solution. Never present `ESLint + Prettier` as one fixed option.
 
 **Pairing tip:** TypeScript projects add `@typescript-eslint`; TailwindCSS projects add the official class-sorting plugin.
 
@@ -517,11 +521,11 @@ Mobile selection is independent of the frontend web flow. When the project type 
 
 | Framework | Language | Notes |
 |-----------|----------|-------|
-| UniApp | Vue (JavaScript/TypeScript) | Same as web Vue |
+| UniApp | JavaScript, TypeScript | Select one in a separate language question; aligned with the web Vue ecosystem |
 | Flutter | Dart | Flutter-specific language |
-| React Native | JavaScript/TypeScript | Same as web React |
-| Android Native | Kotlin / Java | Kotlin is Google's recommendation |
-| iOS Native | Swift / Objective-C | Swift is Apple's recommendation |
+| React Native | JavaScript, TypeScript | Select one in a separate language question; aligned with the web React ecosystem |
+| Android Native | Kotlin, Java | Select one in a separate language question; Kotlin is Google's recommendation |
+| iOS Native | Swift, Objective-C | Select one in a separate language question; Swift is Apple's recommendation |
 
 #### Mobile Layer 3: UI Component Library (recommend per framework)
 
@@ -585,14 +589,14 @@ Mobile selection is independent of the frontend web flow. When the project type 
 
 ---
 
-## 2.1 Automatic Plugin Recommendations
+## 2.1 Linked Companion Plugin Recommendations
 
-After the user picks a main framework and state management, the AI Agent automatically recommends companion plugins:
+After the user completes the technology-layer selections, the AI Agent uses the selected results to trigger companion-plugin recommendations. Every plugin must be shown as an independent option. Multiple selected technologies in the table are trigger conditions, not a selectable bundle, and no plugin may be pre-checked.
 
 ### Vue Ecosystem
 
-| Framework + State | Plugin | Purpose | Required? |
-|-------------------|--------|---------|-----------|
+| Selected-tech condition | Independent plugin option | Purpose | Recommendation level |
+|-------------------------|---------------------------|---------|----------------------|
 | Vue + Pinia | `pinia-plugin-persistedstate` | State persistence (localStorage/sessionStorage) | Recommended |
 | Vue + Pinia | `@pinia/nuxt` | Nuxt integration (Nuxt only) | Required for Nuxt |
 | Vue + Vue Router | `unplugin-vue-router` | File-based, type-safe routing | Optional |
@@ -601,8 +605,8 @@ After the user picks a main framework and state management, the AI Agent automat
 
 ### React Ecosystem
 
-| Framework + State | Plugin | Purpose | Required? |
-|-------------------|--------|---------|-----------|
+| Selected-tech condition | Independent plugin option | Purpose | Recommendation level |
+|-------------------------|---------------------------|---------|----------------------|
 | React + Zustand | `zustand/middleware` (persist) | State persistence | Recommended |
 | React + Redux Toolkit | `redux-persist` | State persistence | Recommended |
 | React + Jotai | `jotai/utils` (atomWithStorage) | State persistence | Recommended |
@@ -611,8 +615,8 @@ After the user picks a main framework and state management, the AI Agent automat
 
 ### Svelte Ecosystem
 
-| Framework + State | Plugin | Purpose | Required? |
-|-------------------|--------|---------|-----------|
+| Selected-tech condition | Independent plugin option | Purpose | Recommendation level |
+|-------------------------|---------------------------|---------|----------------------|
 | Svelte + SvelteKit | `@sveltejs/adapter-auto` | Automatic deployment adapter | Required |
 | Svelte + Svelte Stores | Custom persist store | State persistence | Recommended |
 
@@ -677,7 +681,7 @@ Version compatibility evolves with the ecosystem; at selection time, consult the
 
 ## 2.3 Framework Capability Coverage Matrix (eliminate redundant recommendations)
 
-> **Core goal:** after the user picks a framework, the AI Agent automatically detects the framework's built-in capabilities, marks subsequent layers as "covered" and skips them by default — avoiding redundant third-party library recommendations.
+> **Core goal:** after the user picks a framework, the AI Agent dynamically detects the framework's built-in capabilities, marks subsequent layers as "covered," and offers "use built-in" as an independent candidate; it must not skip by default, and must let the user explicitly choose built-in, standalone, or `None (not needed)`.
 
 ### Frontend Framework Capability Coverage
 
@@ -769,8 +773,8 @@ After the user picks a main framework, companion plugins are shown as **multi-se
 
 **Vue ecosystem companion plugins:**
 
-| Main framework | Companion plugin | Purpose | Default check |
-|----------------|-----------------|---------|---------------|
+| Selected-tech condition | Independent plugin option | Purpose | Recommendation level |
+|-------------------------|---------------------------|---------|----------------------|
 | Vue + Pinia | `pinia-plugin-persistedstate` | State persistence | Recommended |
 | Vue + Vite | `unplugin-auto-import` | Auto API imports | Recommended |
 | Vue + Vite | `unplugin-vue-components` | Auto component imports | Recommended |
@@ -778,33 +782,33 @@ After the user picks a main framework, companion plugins are shown as **multi-se
 
 **React ecosystem companion plugins:**
 
-| Main framework | Companion plugin | Purpose | Default check |
-|----------------|-----------------|---------|---------------|
+| Selected-tech condition | Independent plugin option | Purpose | Recommendation level |
+|-------------------------|---------------------------|---------|----------------------|
 | React + Zustand | `zustand/middleware` (persist) | State persistence | Recommended |
 | React + Redux Toolkit | `redux-persist` | State persistence | Recommended |
 | React + Next.js | `next-auth` | Authentication | As needed |
 
 **NestJS ecosystem companion plugins:**
 
-| Framework | Companion plugin | Purpose | Default check |
-|-----------|-----------------|---------|---------------|
+| Selected-tech condition | Independent plugin option | Purpose | Recommendation level |
+|-------------------------|---------------------------|---------|----------------------|
 | NestJS | `@nestjs/swagger` | Swagger docs | Recommended |
 | NestJS | `@nestjs/throttler` | Rate limiting | Recommended |
 | NestJS | `@nestjs/passport` | Auth strategies | Required with auth |
 | NestJS | `@nestjs/schedule` | Scheduling | As needed |
 
-**Interactive checkbox example:**
+**Dynamic recommendation example (illustrative only, not a fixed list):**
 ```
+# After the user confirms Pinia, run web_search first; options below must come from live results
 ask_followup_question({
   questions: [{
-    question: "Frontend-Which companion plugins do you need?",
-    header: "Frontend-Companion Plugins",
+    question: "Frontend-Pinia companion plugins?",
+    header: "Frontend-Pinia-Plugins",
     multiSelect: true,
     options: [
-      "pinia-plugin-persistedstate (state persistence)",
-      "unplugin-auto-import (auto API imports)",
-      "unplugin-vue-components (auto component imports)",
-      "unplugin-vue-router (file-based routing)"
+      "Live-researched candidate A (purpose and compatibility labeled)",
+      "Live-researched candidate B (purpose and compatibility labeled)",
+      "None (not needed)"
     ]
   }]
 })
@@ -846,12 +850,12 @@ AI: Frontend-UI Library locked: Arco Design. Moving to Frontend-CSS Approach...
 
 ## 3. Backend Tech Selection — Layered Flow (default single-select; AI-evaluated multi-select allowed)
 
-> **Mandatory rule:** Backend selection takes place in Phase 3 and MUST only start after all frontend selection is complete. Mixing with frontend layers in the same batch is forbidden. Each layer defaults to single-select; the AI Agent MUST evaluate per "Protocol 0.5" whether the layer is suitable for multi-select.
+> **Mandatory rule:** Backend selection takes place in Phase 3 and MUST only start after all frontend selection is complete. Mixing with frontend layers in the same turn is forbidden. Each turn contains exactly one question. Each layer defaults to single-select; the AI Agent MUST evaluate per "Protocol 0.5" whether the layer is suitable for multi-select.
 
 ### Selection Flow
 
 ```
-Layer 1: Backend-Main Language   →  Layer 2: Backend-Framework  →  Layer 3: Backend-API Style
+Layer 1: Backend-Runtime → Layer 1-A: Backend-Language → Layer 2: Backend-Framework → Layer 3: Backend-API Style
                                                                        ↓
 Layer 4: Backend-ORM/Data Access →  Layer 5: Backend-Database    →  Layer 6: Backend-Cache
                                                                        ↓
@@ -864,22 +868,34 @@ Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 
 
 ---
 
-### Layer 1: Main Language (mutually exclusive, single-select only)
+### Layer 1: Runtime (mutually exclusive, single-select only)
 
 | Option | Traits | Best for |
 |--------|--------|----------|
-| Java | Enterprise favorite, most mature ecosystem, powerful Spring ecosystem, deep talent pool | Enterprise systems, large projects |
-| Node.js (TypeScript) | One language full-stack, high productivity, FE/BE unity | Rapid development, full-stack teams, small-to-mid projects |
-| Go | Compiled performance, native concurrency, simple deployment | High-performance services, microservices, cloud-native |
-| Python | AI/ML friendly, rapid development, rich ecosystem | AI backends, data analysis, rapid prototyping, content management |
+| Node.js | JavaScript/TypeScript server runtime with a mature ecosystem | Full-stack same-language teams, rapid iteration, small-to-mid services |
+| JDK | Java runtime and standard-library foundation | Enterprise systems and large projects |
+| Go Runtime | Runtime environment for compiled Go services | High-performance services, microservices, cloud-native systems |
+| Python Runtime | Interpreter runtime for Python services | AI/ML, data analysis, rapid prototyping |
 
-> **Emerging runtimes (Node.js ecosystem):** Bun (ultra-fast startup, built-in bundler/test runner/package manager) and Deno (secure sandbox, native TypeScript, Web-standard APIs) are rapidly evolving. When Node.js is selected, the AI Agent should prompt the user to consider Bun/Deno as runtime alternatives, but label them "emerging — observe before production use."
+> **Emerging runtimes:** Bun and Deno are independent runtime candidates. Do not bundle either runtime with TypeScript. Present them after live research and label them "emerging — observe before production use."
 
-**Signals:** large enterprise systems / traditional enterprises in China → Java; isomorphic FE/BE / rapid iteration → Node.js; high concurrency / cloud-native / infra tooling → Go; AI/ML / data analysis / rapid prototyping → Python.
+**Multi-select assessment:** ❌ Mutually exclusive — one backend service normally selects one primary runtime. Verify runtime versions per protocol 0.1.
 
-**Multi-select assessment:** ❌ Mutually exclusive — a backend service uses only one main language; single-select only. Always pick the current LTS (verify per protocol 0.1).
+### Layer 1-A: Development Language (mutually exclusive, single-select only)
 
-**Custom input:** other languages allowed (Rust, C#); the AI only raises compatibility warnings.
+| Option | Traits | Best for |
+|--------|--------|----------|
+| TypeScript | Type safety, IDE intelligence, refactoring support | Node.js or another TypeScript-capable runtime |
+| JavaScript | No type-compilation requirement, low learning curve | Node.js prototypes and lightweight services |
+| Java | Mature enterprise ecosystem and tooling | JDK projects |
+| Go | Compiled, high performance, native concurrency | Go Runtime projects |
+| Python | AI/ML friendly, rich ecosystem, high productivity | Python Runtime projects |
+
+**Signals:** runtime and language are independent decisions. Node.js may pair with TypeScript or JavaScript; JDK normally pairs with Java; Go Runtime pairs with Go; Python Runtime pairs with Python. The AI may explain compatibility but must not merge them into one option.
+
+**Multi-select assessment:** ❌ Mutually exclusive — one service selects one primary development language.
+
+**Custom input:** other runtimes or languages are allowed (Rust, C#); the AI only raises compatibility warnings.
 
 ---
 
@@ -1093,7 +1109,8 @@ Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 
 |--------|--------|----------|
 | Jest | Most popular, zero config, snapshot testing, rich mocks | Node.js projects (default) |
 | Vitest | Vite-native, extremely fast, Jest-compatible API | Vite full-stack projects |
-| Mocha + Chai | Flexible combo, mature community | Custom test stacks |
+| Mocha | Flexible test runner with a mature community | Custom test execution flows |
+| Chai | Independent assertion library | May pair with separately selected Mocha |
 
 #### Go Ecosystem
 
@@ -1175,14 +1192,14 @@ Layer 10: Backend-Test Framework →  Layer 11: Backend-File Storage →  Layer 
 
 ---
 
-## 3.1 Automatic Backend Plugin Recommendations
+## 3.1 Linked Backend Plugin Recommendations
 
-After the user picks a backend framework and ORM, the AI Agent automatically recommends companion plugins:
+After the user completes the backend-layer selections, the AI Agent recommends companion plugins from the selected results. Every plugin must be presented as an independent option. Multiple technologies in the table are trigger conditions, not fixed-bundle options, and no plugin may be pre-selected.
 
 ### Java Ecosystem
 
-| Framework + ORM | Plugin | Purpose | Required? |
-|-----------------|--------|---------|-----------|
+| Selected-tech condition | Independent plugin option | Purpose | Recommendation level |
+|-------------------------|---------------------------|---------|----------------------|
 | Spring Boot + MyBatis Plus | `mybatis-plus-join` | Multi-table joins | Recommended |
 | Spring Boot + MyBatis Plus | `dynamic-datasource` | Multi-datasource support | As needed |
 | Spring Boot + JPA | `spring-data-envers` | Audit logs, data versioning | As needed |
@@ -1194,8 +1211,8 @@ After the user picks a backend framework and ORM, the AI Agent automatically rec
 
 ### Node.js Ecosystem
 
-| Framework + ORM | Plugin | Purpose | Required? |
-|-----------------|--------|---------|-----------|
+| Selected-tech condition | Independent plugin option | Purpose | Recommendation level |
+|-------------------------|---------------------------|---------|----------------------|
 | NestJS + Prisma | Prisma NestJS integration module | Prisma integration | Recommended |
 | NestJS | `@nestjs/swagger` | Auto Swagger docs | Recommended |
 | NestJS | `@nestjs/throttler` | Rate limiting | Recommended |
@@ -1207,8 +1224,8 @@ After the user picks a backend framework and ORM, the AI Agent automatically rec
 
 ### Go Ecosystem
 
-| Framework + ORM | Plugin | Purpose | Required? |
-|-----------------|--------|---------|-----------|
+| Selected-tech condition | Independent plugin option | Purpose | Recommendation level |
+|-------------------------|---------------------------|---------|----------------------|
 | Gin + Gorm | `gorm/datatypes` | Extended data types | As needed |
 | Gin + Gorm | `gorm/hints` | Optimizer hints | As needed |
 | Gin | `swaggo/swag` | Auto Swagger docs | Recommended |
@@ -1219,8 +1236,8 @@ After the user picks a backend framework and ORM, the AI Agent automatically rec
 
 ### Python Ecosystem
 
-| Framework + ORM | Plugin | Purpose | Required? |
-|-----------------|--------|---------|-----------|
+| Selected-tech condition | Independent plugin option | Purpose | Recommendation level |
+|-------------------------|---------------------------|---------|----------------------|
 | FastAPI | `uvicorn[standard]` | ASGI server | Required |
 | FastAPI | `python-multipart` | File upload support | Required for file uploads |
 | FastAPI + SQLAlchemy | `alembic` | Database migrations | Recommended |

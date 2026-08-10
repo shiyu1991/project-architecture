@@ -170,7 +170,7 @@ In Product mode, this phase outputs a **domain-model sketch + core user flows** 
 
 # 7. Tech Selection Overview
 
-Tech selection uses **layer-by-layer interactive checkbox + dynamic research + capability awareness + linkage recommendations + multi-select compatibility evaluation**: the AI Agent MUST use the `ask_followup_question` tool to let users select via checkboxes, not plain text recommendations; before presenting candidates at each layer, the AI MUST use `web_search` to dynamically research the current tech landscape (see `references/tech-stack-guide.md` protocol 0.4) — the document tables serve only as a reference baseline; during selection, detect the chosen framework's built-in capabilities and label "covered" hints in subsequent layers; link-recommend compatible companion frameworks and plugins; **each layer defaults to single-select, but the AI Agent MUST evaluate per "Protocol 0.5 Multi-Select Compatibility Evaluation" whether the layer is suitable for multi-select — when multiple options don't conflict and each has irreplaceable strengths (e.g., Axios excels at upload/download progress, fetch excels at SSE/streaming), present with `multiSelect: true`; when multi-selected, encapsulate each option independently in the Core layer with a unified external interface**.
+Tech selection uses **single-step conversational confirmation + fresh research after every choice + capability awareness + immediate linked recommendations + multi-select compatibility evaluation**. Each turn asks exactly one selection question through `ask_followup_question`. After the user confirms it, the AI Agent MUST use all accumulated selections to research the current ecosystem, compatibility, and common companion solutions again through `web_search`, then generate 3-5 independent candidates for the next turn. It must not pre-generate later questions or copy document tables as final options. When a choice triggers a valuable companion framework, extension, or plugin, prioritize it as an independent follow-up candidate at the appropriate point; for example, after Pinia is selected, dynamically evaluate and recommend `pinia-plugin-persistedstate`. **Each layer defaults to single-select, but the AI Agent MUST evaluate multi-select viability per Protocol 0.5. Every optional layer or companion choice MUST include a `None` option, and the user always has the final say.**
 
 ## 7.0 Multi-Select Compatibility Evaluation Protocol (mandatory, highest priority)
 
@@ -197,7 +197,7 @@ Tech selection uses **layer-by-layer interactive checkbox + dynamic research + c
 
 **Typical mutually exclusive layers (no multi-select):**
 - Frontend-Main Framework, Frontend-UI Library, Frontend-State Management, Frontend-Router
-- Backend-Main Language, Backend-Framework, Backend-Database (primary), Backend-Logging
+- Backend-Runtime, Backend-Language, Backend-Framework, Backend-Database (primary), Backend-Logging
 
 **Key principle:** Multi-select is not the default behavior — it is a recommendation after AI Agent evaluation. The final decision to multi-select belongs to the user. See `references/tech-stack-guide.md` protocol 0.5 for detailed evaluation criteria, encapsulation spec, and the full layer matrix.
 
@@ -215,7 +215,15 @@ Tech selection uses **layer-by-layer interactive checkbox + dynamic research + c
 - Every layer is presented via `ask_followup_question` for the user to choose
 - Recommended items are labeled "recommended" with a one-sentence reason, but the choice belongs to the user
 - Layers covered by the chosen framework still require the user to confirm whether to use built-in or pick a standalone solution
-- The user may say "auto-select the rest for me" at any time to authorize the AI to batch-select
+- The user may say "auto-select the rest for me" at any time to authorize the AI to select, but the AI must still explain and confirm each dynamic recommendation in sequence
+
+### Independent Option Rule (mandatory)
+
+- One option represents exactly one independently selectable technology, framework, runtime, language, or plugin
+- Never bundle independent decisions into one option, such as `Node.js + TypeScript`, `Vue + Pinia`, or `NestJS + Prisma`
+- Runtime, language, framework, and plugins must be selected in separate questions or stages; earlier choices only filter compatible candidates and trigger recommendations
+- `+` may appear only in compatibility relationships, trigger conditions, responsibility descriptions, or completed-result summaries; it must not represent a fixed bundle inside candidate option text
+- Multi-select layers still allow users to check multiple independent options; the resulting combination is user-created, not pre-bundled by the AI
 
 ## 7.2 Interactive Selection Flow (mandatory)
 
@@ -230,54 +238,44 @@ Incorrect examples: `"State Management"`, `"Cache"`, `"UI Library"`, `"ORM/Data 
 
 ### Frontend/Backend Separation Rule (mandatory)
 
-**Frontend and backend layer-by-layer selection MUST be done in separate phases. Mixing frontend and backend layers in the same batch of questions is forbidden.**
+**Frontend and backend layer-by-layer selection MUST be done in separate phases. Mixing frontend and backend layers in the same turn is forbidden.**
 
 - All frontend layers must be fully selected before starting backend selection
-- Each batch of questions may only belong to one side (all frontend or all backend) — mixed batches are forbidden
+- Each turn may only belong to one side (all frontend or all backend) and may contain exactly one question
 - After frontend selection is complete, explicitly inform the user: "Frontend tech stack confirmed. Now entering backend tech selection," then begin backend selection
 
-### Three-Phase Selection
+### Four-Phase Selection (one question per turn within each phase)
 
-### Phase 1: Core Tech Stack Selection (cross-stack batch checkbox)
+### Phase 1: Core Tech Stack Selection (cross-stack, one question per turn)
 
-Present key selections (frontend framework, backend language, database, deployment, etc.) in one batch for the user to check off. Cross-stack mixing is allowed in this phase because these are global decisions:
+Ask about the frontend framework, backend runtime, backend development language, database, deployment, and other core choices in sequence. Each turn may contain only one question. After the user confirms it, perform fresh dynamic research before generating the next question. This phase may move between frontend and backend global decisions, but never asks multiple layers in one turn:
 
 ```
+# The questions array may contain exactly one question per turn
 ask_followup_question({
-  questions: [
-    { question: "Frontend framework?", header: "Frontend-Main Framework", options: ["Vue", "React", "Svelte"], multiSelect: false },
-    { question: "Backend language?", header: "Backend-Main Language", options: ["Node.js (TypeScript)", "Java", "Go", "Python"], multiSelect: false },
-    { question: "Database?", header: "Database", options: ["MySQL", "PostgreSQL", "MongoDB"], multiSelect: false },
-    { question: "Deployment?", header: "Deployment", options: ["Docker Compose", "Docker", "Managed Cloud"], multiSelect: false },
-    ...
-  ]
+  questions: [{
+    question: "Frontend framework?",
+    header: "Frontend-Main Framework",
+    options: ["Candidate A generated by live AI research", "Candidate B", "Candidate C"],
+    multiSelect: false
+  }]
 })
+
+# After confirmation: persist result → run fresh web_search → evaluate compatibility → generate the next single question
 ```
 
 ### Phase 2: Frontend Layer-by-Layer Extended Selection (frontend only, linked checkbox)
 
 Based on the Phase 1 frontend framework choice, present compatible frontend candidates **layer by layer**, with each layer requiring user selection. **All questions in this phase contain only frontend layers — backend layers are forbidden.**
 
-```
-ask_followup_question({
-  questions: [
-    { question: "Frontend language?", header: "Frontend-Language", options: [
-      "TypeScript (recommended: type safety, IDE intelligence)",
-      "JavaScript (no compile overhead, low learning curve)"
-    ], multiSelect: false },
-    { question: "Frontend build tool?", header: "Frontend-Build Tool", options: [
-      "Vite (recommended: instant HMR, officially recommended by Vue)",
-      "Webpack (mature ecosystem, legacy projects)"
-    ], multiSelect: false },
-    { question: "Frontend UI library?", header: "Frontend-UI Library", options: [
-      "Element Plus (recommended: mature Vue 3 ecosystem, large Chinese community)",
-      "Naive UI",
-      "Ant Design Vue"
-    ], multiSelect: false },
-    ...
-  ]
-})
-```
+After every frontend choice, immediately execute this linkage loop:
+
+1. Persist the user's selection and update accumulated context
+2. Dynamically search for the next compatible frameworks, extensions, and plugins using all selected items
+3. Check whether the new choice triggers valuable companion options; if so, an independent optional plugin question may be inserted first
+4. Ask exactly one next question and wait for confirmation before continuing
+
+For example, after Pinia is selected, do not immediately continue to a pre-scripted router question. First research the current Pinia extension ecosystem and compatibility, then the AI may ask one `Frontend-Pinia Companion Plugins` multi-select question containing live-verified options such as `pinia-plugin-persistedstate` and `None`.
 
 After all frontend layers are selected, explicitly inform the user:
 
@@ -285,39 +283,18 @@ After all frontend layers are selected, explicitly inform the user:
 
 ### Phase 3: Backend Layer-by-Layer Extended Selection (backend only, linked checkbox)
 
-Based on the Phase 1 backend language choice, present compatible backend candidates **layer by layer**, with each layer requiring user selection. **All questions in this phase contain only backend layers — frontend layers are forbidden.**
+Based on the Phase 1 backend runtime and development-language choices, present compatible backend candidates **layer by layer**, with each layer requiring user selection. **All questions in this phase contain only backend layers — frontend layers are forbidden.**
 
-```
-ask_followup_question({
-  questions: [
-    { question: "Backend framework?", header: "Backend-Framework", options: [
-      "NestJS (recommended: modular, TS-native, IoC container)",
-      "Express (lightest, largest ecosystem)",
-      "Fastify (performance-first, schema validation)"
-    ], multiSelect: false },
-    { question: "Backend API style? (multi-select viable: RESTful external + gRPC internal is a common microservice combo)", header: "Backend-API Style", options: [
-      "RESTful (recommended: universal standard, frontend-friendly)",
-      "GraphQL (flexible queries, fetch-on-demand)",
-      "gRPC (high performance, internal microservice comms)"
-    ], multiSelect: true },
-    { question: "Backend ORM/data access?", header: "Backend-ORM/Data Access", options: [
-      "Prisma (recommended: type-safe, schema-first)",
-      "TypeORM (decorator style)",
-      "Drizzle ORM (lightweight, SQL-style)"
-    ], multiSelect: false },
-    ...
-  ]
-})
-```
+The backend follows the same `one choice → fresh research → one question` loop. For example, after NestJS is selected, the AI Agent must research the current NestJS ecosystem, project needs, and selected auth/API/deployment choices before deciding whether the next question is a normal layer or a companion-plugin question involving options such as `@nestjs/swagger` or `@nestjs/throttler`. Plugin candidates must never be hard-coded, and optional questions must include `None`.
 
 **Key rules:**
-- 3-4 checkbox questions per batch, avoid showing too many at once
-- Each option labeled "recommended" with a one-sentence reason
+- Ask exactly one checkbox question per turn; framework or library choices normally generate 5-8 candidates dynamically, while plugin or extension choices normally generate 3-5
+- Each option is labeled "recommended" with a one-sentence reason, but candidates must come from fresh research for this turn
 - **All question headers MUST include a "Frontend-" or "Backend-" prefix** (except Phase 1 global decisions)
-- **Mixing frontend and backend layers in the same batch is forbidden** (except Phase 1 global decisions)
-- **Each layer MUST be evaluated per "Protocol 0.5" for its multiSelect value** (multi-select viable layers use `true`, mutually exclusive layers use `false`)
-- Layers covered by the chosen framework show "use built-in" as the recommended option, but still require user confirmation
-- Companion plugins are presented as multi-select checkboxes for the user to pick as needed
+- **Frontend and backend layers MUST NOT be mixed within one turn** (Phase 1 global decisions may be handled across separate turns)
+- **After every choice, reassess the current layer per Protocol 0.5 for its multiSelect value** (viable layers use `true`, mutually exclusive layers use `false`)
+- Layers covered by the chosen framework show "use built-in" alongside standalone candidates, but still require user confirmation
+- Companion plugins are presented as independent multi-select options; optional plugin questions MUST include `None (not needed)`
 - When the user multi-selects, the AI Agent MUST encapsulate each option independently in the Core layer with a unified external interface
 
 ## 7.3 Capability Awareness & Redundancy Hints (mandatory)
@@ -357,12 +334,14 @@ Common capability coverage relationships (full matrix in `references/tech-stack-
 
 ## 7.5 Selection Layers & Order (mandatory)
 
-**Selection order mandatory rule: Phase 1 (core selection) → Phase 2 (all frontend layers) → Phase 3 (all backend layers) → cross-cutting concerns. Reordering is forbidden.**
+**Phases are navigation only: Phase 1 (core selection) → Phase 2 (frontend layers) → Phase 3 (backend layers) → Phase 4 (cross-cutting concerns). Each phase must ask one question per turn; plugin or extension recommendations may be dynamically inserted after any confirmed choice. There is no fixed final recommendation phase.**
 
 ### Phase 1: Core Selection (cross-stack, mixing allowed)
 
-Global decision items, mixing allowed in the same batch:
-- Frontend main framework, backend main language, database, deployment
+Global decision items, asked as needed across separate turns:
+- Frontend main framework, backend runtime, backend development language, database, deployment
+
+Backend runtime and development language must be presented as two independent questions. For example, after selecting `Node.js`, the user still independently chooses among compatible language candidates such as `TypeScript` or `JavaScript`.
 
 ### Phase 2: All Frontend Layers (in order, backend layers forbidden)
 
@@ -370,7 +349,7 @@ Global decision items, mixing allowed in the same batch:
 
 ### Phase 3: All Backend Layers (in order, frontend layers forbidden)
 
-**Backend-Main Language** (selected in Phase 1) → **Backend-Framework** → **Backend-API Style** → **Backend-ORM/Data Access** → **Backend-Database** (selected in Phase 1) → **Backend-Cache** → **Backend-Message Queue** → **Backend-Auth** → **Backend-Logging** → **Backend-Test Framework** → **Backend-File Storage** (optional) → **Backend-Scheduling** (optional)
+**Backend-Runtime** (selected in Phase 1) → **Backend-Language** (selected in Phase 1) → **Backend-Framework** → **Backend-API Style** → **Backend-ORM/Data Access** → **Backend-Database** (selected in Phase 1) → **Backend-Cache** → **Backend-Message Queue** → **Backend-Auth** → **Backend-Logging** → **Backend-Test Framework** → **Backend-File Storage** (optional) → **Backend-Scheduling** (optional)
 
 ### Phase 4: Cross-Cutting Concerns
 
@@ -378,7 +357,7 @@ Global decision items, mixing allowed in the same batch:
 
 ## 7.5-A Selection Progress Tracking (mandatory)
 
-During selection, the AI Agent MUST output a progress summary after each batch, so the user can see selected/pending/skipped status at any time:
+During selection, the AI Agent MUST output a progress summary after each user-confirmed turn, so the user can see selected/pending/explicitly-skipped status at any time:
 
 ```
 ## Selection Progress [3/12 frontend layers completed]
@@ -392,7 +371,7 @@ During selection, the AI Agent MUST output a progress summary after each batch, 
 ```
 
 **Rules:**
-- Output progress summary immediately after each batch
+- Output progress summary immediately after each user-confirmed turn
 - Selected layers: ✅ with the result
 - Pending layers: ⬜
 - Skipped layers (e.g., frontend skipped in a backend-only project): ⏭️ with "not needed"
@@ -442,15 +421,16 @@ Users may change a previously selected option during or after selection:
 
 ## 7.6 Interaction Rules per Mode
 
-- **Guided**: 3-4 checkbox questions per batch, each item labeled "recommended" with a one-sentence explanation; user checks to confirm
-- **Product**: show recommended lists in batches, each item labeled "recommended"; user confirms or tweaks batch by batch
-- **Expert**: batch checkboxes, more candidates per batch (Top 3-5), recommended items labeled "recommended"; user selects layer by layer
+- **Guided**: one checkbox question per turn with 3-5 candidates, each labeled "recommended" with a one-sentence explanation
+- **Product**: dynamically generate the next question after each latest selection; user confirms or tweaks one item at a time
+- **Expert**: one question per turn; candidate count is determined by fresh research, with recommended items labeled "recommended"
 - **All modes**: dynamic version resolution (`npm view <pkg> version` / Maven Central / Go Module Proxy / PyPI); never reuse stale version numbers
-- **All modes**: before presenting candidates at each layer, MUST execute `web_search` to dynamically research and merge latest options; document tables are only a reference baseline (per tech-stack-guide.md protocol 0.4)
-- **All modes**: each layer MUST be evaluated per "Protocol 0.5" for its multiSelect value; multi-select viable layers (e.g., HTTP client, test framework, cache, file storage) use `true`, mutually exclusive layers use `false`
-- **All modes**: auto-filling, auto-locking, and skipping layers are forbidden. All layers must be confirmed by the user
+- **All modes**: after every user-confirmed option, MUST run a fresh `web_search` using the full accumulated context before asking the next question; document tables are search hints only, never final candidates
+- **All modes**: ask exactly one question per turn and dynamically generate 3-5 independent candidates; optional layers and plugin questions MUST include `None (not needed)`
+- **All modes**: reassess the current layer's `multiSelect` value after each new choice; viable multi-select layers use `true`, mutually exclusive layers use `false`
+- **All modes**: auto-filling, auto-locking, and silent skipping are forbidden; optional layers must be explicitly confirmed through the `None (not needed)` candidate
 - **All modes**: all question headers MUST include a "Frontend-" or "Backend-" prefix (except Phase 1 global decisions)
-- **All modes**: mixing frontend and backend layers in the same batch is forbidden (except Phase 1 global decisions); complete all frontend selection before starting backend
+- **All modes**: mixing frontend and backend layers in the same turn is forbidden (except Phase 1 global decisions), and each turn may contain exactly one question; complete all frontend selection before starting backend
 
 For detailed candidates, capability coverage matrix, compatibility matrices, linkage rules, and plugin recommendations, see `references/tech-stack-guide.md`.
 

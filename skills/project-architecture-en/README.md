@@ -23,7 +23,7 @@ This Skill encodes a senior architect's working method as an enforceable protoco
 | Interactive checkbox selection | Uses `ask_followup_question` tool for users to check off tech choices; two phases: core framework selection + linked extended selection based on prior choices |
 | Multi-select compatibility evaluation | Each layer defaults to single-select; after AI evaluation, multi-select can be opened — when multiple options don't conflict and have complementary strengths (e.g., Axios for progress monitoring, fetch for SSE/streaming), users can multi-select and Core layer encapsulates each separately, improving compatibility and stability |
 | Capability awareness | Auto-detects built-in capabilities of chosen frameworks (e.g., Element Plus form validation, Spring Boot logging) and skips redundant layers — no duplicate recommendations |
-| Layered linkage recommendations | Choosing A auto-recommends B; earlier choices filter later options; companion plugins shown as multi-select checkboxes |
+| Layered linkage recommendations | Earlier choices filter later candidates; after base selection, companion plugins are recommended as independent options from selected-tech conditions, and the user may select multiple, one, or none |
 | Compatibility matrices | Instant structural binding checks; version-level compatibility verified live |
 | Core + DDD architecture | Separate Core structures for frontend & backend, DDD business modules, reuse red lines |
 | ADR decision records | Decisions persist; AI sessions never lose memory |

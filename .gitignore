@@ -2,7 +2,7 @@
 .DS_Store
 Thumbs.db
 Desktop.ini
-
+.codebuddy
 # IDE
 .idea/
 .vscode/
