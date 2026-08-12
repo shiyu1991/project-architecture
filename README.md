@@ -85,69 +85,6 @@ project-architecture-skill/
 
 详细文档见 [skills/project-architecture/README.md](skills/project-architecture/README.md)。
 
----
-
-<a id="english"></a>
-
-## Make AI Coding Agents work like senior architects
-
-An open-source Skill: from "I want to build X" to an enterprise-grade, long-term maintainable project structure.
-
-### The problem
-
-More people than ever code with AI, but AI-generated projects share common flaws:
-
-- **One-line requirement → instant code dump** — no business analysis, no tech selection
-- **No architecture at all** — everything piles up; rot begins at the second iteration
-- **Reinventing the wheel** — every module gets its own HTTP wrapper and error handling
-- **Arbitrary tech choices** — stale versions, incompatible combinations
-- **No continuity** — a new AI session means total amnesia
-
-This Skill encodes a senior architect's working method as an enforceable protocol for AI Agents.
-
-### Core capabilities
-
-| Capability | Description |
-|-----------|-------------|
-| Three user modes | Fully-guided for beginners / business modeling for PMs / fast-track for developers |
-| Scale tiers | S/M/L classification with risk-aware gates; small projects avoid big architectures and high-risk projects are not underestimated |
-| Interactive checkbox selection | Uses `ask_followup_question` for one decision at a time; next candidates are researched from accumulated context |
-| Multi-select compatibility evaluation | Each layer defaults to single-select; after AI evaluation, multi-select can be opened — non-conflicting options can combine (e.g., Axios + fetch), Core layer encapsulates each separately |
-| Capability awareness | Detects built-in capabilities and offers “use built-in,” standalone, or `None (not needed)`; never silently skips a user decision |
-| Layered linkage recommendations | Earlier choices filter later candidates; companion plugins are recommended as needed and confirmed by the user |
-| Compatibility matrices | Instant structural checks; version-level compatibility verified live |
-| Dynamic research | Mandatory `web_search` before presenting candidates at each layer; document tables are only a reference baseline |
-| Security scanning | SAST / dependency vulnerability / container image / DAST multi-dimensional security scanning recommendations |
-| Core + DDD architecture | Separate Core structures for FE & BE, DDD modules, reuse red lines |
-| ADR decision records | Decisions persist across AI sessions |
-| Tiered lifecycle | Tier S/M low-risk projects may use a trimmed lifecycle; Tier L or high-risk projects use all six phases plus security and release gates |
-| Ready-to-use templates | Tier-appropriate `.agent/` files, root `docs/adr/`, ADR template, and README template |
-
-### Supported AI Agents
-
-OpenAI Codex · Claude Code · CodeBuddy · Cursor Agent · OpenCode · Devin-like agents
-
-### Installation
-
-```bash
-# Claude Code
-cp -r skills/project-architecture-en ~/.claude/skills/project-architecture
-
-# CodeBuddy
-cp -r skills/project-architecture-en ~/.codebuddy/skills/project-architecture
-```
-
-### Usage
-
-- "I want to build a pet-boarding app, and I'm not technical" (Guided mode)
-- "Here's our product PRD — help me bootstrap the project" (Product mode)
-- "Initialize a React + NestJS admin project" (Expert mode)
-- "Analyze this repo's tech stack and suggest improvements" (reverse analysis)
-
-Full docs: [skills/project-architecture-en/README.md](skills/project-architecture-en/README.md).
-
----
-
 ## License
 
 [MIT](LICENSE)
