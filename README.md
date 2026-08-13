@@ -1,10 +1,6 @@
 # project-architecture
 
-[English](#english) | [中文](#中文)
-
 ---
-
-<a id="中文"></a>
 
 ## 让 AI Coding Agent 像资深架构师一样工作
 
@@ -70,13 +66,11 @@ cp -r skills/project-architecture ~/.codebuddy/skills/
 ```
 project-architecture-skill/
 ├── skills/
-│   ├── project-architecture/      # 中文版 Skill
-│   │   ├── SKILL.md               # 主入口：模式识别、规模分级、执行协议
-│   │   ├── references/            # 技术选型指南 / 架构设计 / 开发生命周期
-│   │   ├── templates/             # .agent 四件套、ADR、README 模板
-│   │   └── README.md
-│   └── project-architecture-en/   # English version
-│       └── ...
+│   └── project-architecture/      # Skill
+│       ├── SKILL.md               # 主入口：模式识别、规模分级、执行协议
+│       ├── references/            # 技术选型指南 / 架构设计 / 开发生命周期
+│       ├── templates/             # .agent 四件套、ADR、README 模板
+│       └── README.md
 ├── CHANGELOG.md                    # 版本变更记录
 ├── CONTRIBUTING.md                 # 贡献指南
 ├── LICENSE                         # MIT

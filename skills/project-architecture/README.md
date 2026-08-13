@@ -2,6 +2,27 @@
 
 让 AI Coding Agent 像资深架构师一样工作的 Skill：从一句"我想做个 XX"到可长期维护的企业级项目结构。
 
+## 5分钟快速上手
+
+**第一次用？按这个顺序读，不用提前通读所有文档：**
+
+1. **本 README**（5 分钟）— 了解解决什么问题、核心能力、怎么触发
+2. **`SKILL.md`**（10 分钟）— 主入口，AI Agent 实际加载的执行协议
+3. **按需查阅 `references/`** — 只在 AI 提示加载时才看，新手无需提前阅读
+
+> 文档虽多，但日常使用只需 README + SKILL.md。`references/` 是深度参考，AI 会按需自动加载。
+
+**最快启动方式**（安装后对 AI 说一句即可）：
+
+| 你是谁 | 说什么 | 触发什么 |
+|--------|--------|----------|
+| 不懂技术 | "我想做一个 XX，但我不懂技术" | 🌱 引导模式，全程大白话带你选 |
+| 产品经理 | "这是我们的 PRD，帮我立项" | 📋 产品模式，业务建模 + 技术结论清单 |
+| 开发者 | "帮我初始化一个 React + NestJS 项目" | ⚡ 专家模式，逐层快速过选型 |
+| 已有项目 | "分析这个仓库的技术栈并给优化建议" | 🔍 反向分析，只评估不重选 |
+
+> 不确定说哪个？直接描述你想做的事，AI 会自动识别模式。
+
 ## 解决什么问题
 
 用 AI 写代码的人越来越多，但 AI 生成项目的通病是：
@@ -65,7 +86,11 @@ project-architecture/
 ├── references/
 │   ├── tech-stack-guide.md         # 技术选型详细指南（动态层级、兼容性与安全扫描）
 │   ├── architecture-design.md      # Core / DDD / ADR 架构设计细节
-│   └── dev-lifecycle.md            # 6 阶段生命周期、Git 工作流、测试安全规范
+│   ├── dev-lifecycle.md            # 6 阶段生命周期、Git 工作流、测试安全规范
+│   ├── examples.md                 # 端到端使用示例（触发→执行→输出）
+│   ├── sample-reports.md           # 输出成品样例（领域模型/技术栈汇总/反向分析/验收）
+│   ├── anti-patterns.md            # 反模式清单与禁忌用法
+│   └── faq-deep.md                 # 深度 FAQ（边界情况、多 Agent 协作）
 ├── templates/
 │   ├── agent-context.md            # .agent/context.md 模板
 │   ├── agent-architecture.md       # .agent/architecture.md 模板
