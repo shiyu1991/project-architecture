@@ -627,7 +627,7 @@ header: "前端-表单验证"
 | `@tanstack/query` | 数据获取与缓存（如未在 Layer 6 选择） | 按需 |
 | `dayjs` | 日期处理（轻量） | 推荐 |
 | `lodash-es` | 工具函数（按需引入） | 按需 |
-| 图标库（按 UI 框架选配套） | UI 图标方案，禁止用 emoji 充当 UI 图标。React → Lucide React / Heroicons；Vue → Lucide Vue / Heroicons；Svelte → Lucide Svelte；跨框架 → Iconify（按需加载）或 Phosphor / Tabler Icons | 推荐 |
+| Iconify 系列 | 图标方案（按需加载，按框架选对应集成包） | 推荐 |
 | `@typescript-eslint` | TypeScript ESLint 规则（如 Layer 11 选 ESLint） | 推荐 |
 | `i18next-parser` / `@formatjs/cli` | 翻译 key 自动提取（如 Layer 12 启用） | 按需 |
 
