@@ -87,9 +87,8 @@ cp -r project-architecture ~/.codebuddy/skills/
 
 ```
 project-architecture/
-├── SKILL.md                        # 主入口：模式识别、规模分级、执行协议（精简版）
+├── SKILL.md                        # 主入口：模式识别、规模分级、执行协议
 ├── references/
-│   ├── execution-protocol.md       # 选型强制要点、进度追踪、异常恢复、架构规范（选型时必加载）
 │   ├── tech-stack-guide.md         # 技术选型详细指南（多选兼容、兼容性矩阵、安全扫描）
 │   ├── architecture-design.md      # Core / DDD / ADR 架构设计细节
 │   ├── dev-lifecycle.md            # 6 阶段生命周期、Git 工作流、测试安全规范
